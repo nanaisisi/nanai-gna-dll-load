@@ -142,29 +142,34 @@ fn run_model_demo(
     duration: Option<u64>,
     concurrency: usize,
 ) {
-    const W: usize = 16;
-    const H: usize = 16;
+    const W: usize = 64;
+    const H: usize = 64;
     const B: usize = 1;
 
-    let weights = [1_i16; W * H];
-    let inputs = [1_i16; W * B];
-    let biases = [0_i32; H];
+    let weights = vec![1_i16; W * H];
+    let inputs = vec![1_i16; W * B];
+    let biases = vec![0_i32; H];
+    println!("[TRACE] 1. Allocating buffer...");
     let memory = match device.allocate_buffer(64 * 1024) {
         Ok(memory) => memory,
         Err(error) => return eprintln!("Failed to allocate model memory: {error}"),
     };
+    println!("[TRACE] 2. Buffer allocated at {:p}, size {}", memory.as_raw_ptr(), memory.len());
+
     let base = memory.as_raw_ptr() as *mut u8;
     let inputs_ptr = base as *mut i16;
     let outputs_ptr = unsafe { base.add(4096) } as *mut i32;
     let weights_ptr = unsafe { base.add(8192) } as *mut i16;
     let biases_ptr = unsafe { base.add(12288) } as *mut i32;
 
+    println!("[TRACE] 3. Copying inputs, weights, biases into buffer...");
     unsafe {
         std::ptr::copy_nonoverlapping(inputs.as_ptr(), inputs_ptr, inputs.len());
         std::ptr::copy_nonoverlapping(weights.as_ptr(), weights_ptr, weights.len());
         std::ptr::copy_nonoverlapping(biases.as_ptr(), biases_ptr, biases.len());
         std::ptr::write_bytes(outputs_ptr, 0, H * B);
     }
+    println!("[TRACE] 4. Buffer filled. Building model...");
 
     let model = match GnaModelBuilder::new()
         .add_fully_connected_affine(

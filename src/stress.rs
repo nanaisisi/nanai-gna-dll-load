@@ -154,19 +154,17 @@ impl GnaLoadTester {
         let mut in_flight: Vec<(u32, Instant)> = Vec::with_capacity(concurrency);
 
         while completed + failed < max_iterations {
-            if let Some(dur) = max_duration {
-                if start_time.elapsed() >= dur {
+            if let Some(dur) = max_duration
+                && start_time.elapsed() >= dur {
                     break;
                 }
-            }
 
             // Enqueue up to concurrency limit
             while in_flight.len() < concurrency && (completed + failed + in_flight.len()) < max_iterations {
-                if let Some(dur) = max_duration {
-                    if start_time.elapsed() >= dur {
+                if let Some(dur) = max_duration
+                    && start_time.elapsed() >= dur {
                         break;
                     }
-                }
 
                 let req_start = Instant::now();
                 match request_config.enqueue() {
@@ -204,11 +202,10 @@ impl GnaLoadTester {
                         latency_max = lat;
                     }
 
-                    if self.config.track_hw_usage {
-                        if let Ok(stats) = request_config.get_performance_stats() {
+                    if self.config.track_hw_usage
+                        && let Ok(stats) = request_config.get_performance_stats() {
                             usage_monitor.record(&stats);
                         }
-                    }
                 }
                 Err(_) => {
                     failed += 1;
@@ -230,11 +227,10 @@ impl GnaLoadTester {
                         latency_max = lat;
                     }
 
-                    if self.config.track_hw_usage {
-                        if let Ok(stats) = request_config.get_performance_stats() {
+                    if self.config.track_hw_usage
+                        && let Ok(stats) = request_config.get_performance_stats() {
                             usage_monitor.record(&stats);
                         }
-                    }
                 }
                 Err(_) => {
                     failed += 1;

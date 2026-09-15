@@ -164,16 +164,8 @@ impl GnaModelBuilder {
         let mut operations: Vec<Gna2Operation> = Vec::with_capacity(self.layers.len());
         // Pointers passed into Gna2OperationInitFullyConnectedAffine are stored into op.operands!
         // We must ensure the Gna2Tensor structs themselves remain at stable memory addresses!
-        let mut fca_storage: Vec<(
-            Box<Gna2Tensor>,
-            Box<Gna2Tensor>,
-            Box<Gna2Tensor>,
-            Box<Gna2Tensor>,
-            Box<Gna2Tensor>,
-        )> = Vec::new();
-
-        for layer in &self.layers {
-            match layer {
+        for mut layer in self.layers.drain(..) {
+            match &mut layer {
                 LayerDefinition::FullyConnectedAffine {
                     input,
                     output,
@@ -181,50 +173,19 @@ impl GnaModelBuilder {
                     biases,
                     activation,
                 } => {
-                    fca_storage.push((
-                        Box::new(*input),
-                        Box::new(*output),
-                        Box::new(*weights),
-                        Box::new(*biases),
-                        Box::new(*activation),
-                    ));
-                }
-                LayerDefinition::Raw(_) => {}
-            }
-        }
-
-        let mut fca_idx = 0;
-        for layer in self.layers.drain(..) {
-            match layer {
-                LayerDefinition::FullyConnectedAffine { .. } => {
-                    let (inp, out, w, b, act) =
-                        &mut fca_storage[fca_idx];
-                    fca_idx += 1;
-
                     let mut op = Gna2Operation::default();
-                    if true {
-                        let fca_init = library.symbols().operation_init_fully_connected_affine.unwrap();
+                    if let Some(fca_init) = library.symbols().operation_init_fully_connected_affine {
                         let status = unsafe {
                             fca_init(
                                 &mut op,
                                 rust_gna2_user_allocator,
-                                inp.as_mut(),
-                                out.as_mut(),
-                                w.as_mut(),
-                                b.as_mut(),
-                                act.as_mut(),
+                                &mut **input,
+                                &mut **output,
+                                &mut **weights,
+                                &mut **biases,
+                                &mut **activation,
                             )
                         };
-                        println!("    [DEBUG] fca_init returned status {}, operands count: {}", status, op.number_of_operands);
-                        for i in 0..op.number_of_operands as usize {
-                            let tensor_ptr = unsafe { *op.operands.add(i) };
-                            println!("      [DEBUG] operand[{}] ptr: {:p}", i, tensor_ptr);
-                            if !tensor_ptr.is_null() {
-                                let t = unsafe { &*tensor_ptr };
-                                println!("        shape dims: {}, dim[0]: {}, dim[1]: {}, mode: {:?}, type: {:?}, data: {:p}",
-                                    t.shape.number_of_dimensions, t.shape.dimensions[0], t.shape.dimensions[1], t.mode, t.data_type, t.data);
-                            }
-                        }
                         if status != GNA2_STATUS_SUCCESS {
                             return Err(GnaError::from_status(status));
                         }
@@ -239,11 +200,11 @@ impl GnaModelBuilder {
                             if mem.is_null() {
                                 return Err(GnaError::NullPointer);
                             }
-                            *mem.add(0) = inp.as_ref() as *const Gna2Tensor;
-                            *mem.add(1) = out.as_ref() as *const Gna2Tensor;
-                            *mem.add(2) = w.as_ref() as *const Gna2Tensor;
-                            *mem.add(3) = b.as_ref() as *const Gna2Tensor;
-                            *mem.add(4) = act.as_ref() as *const Gna2Tensor;
+                            *mem.add(0) = input.as_ref() as *const Gna2Tensor;
+                            *mem.add(1) = output.as_ref() as *const Gna2Tensor;
+                            *mem.add(2) = weights.as_ref() as *const Gna2Tensor;
+                            *mem.add(3) = biases.as_ref() as *const Gna2Tensor;
+                            *mem.add(4) = activation.as_ref() as *const Gna2Tensor;
                             mem
                         };
                         op.operands = operands_buf;

@@ -61,8 +61,10 @@ impl GnaBuffer {
         let mut granted: u32 = 0;
         let mut raw_ptr: *mut c_void = std::ptr::null_mut();
 
+        println!("[DEBUG new_for_device] device_index={}, size={}", device_index, size);
         let status =
             unsafe { alloc_for_device(device_index, size as u32, &mut granted, &mut raw_ptr) };
+        println!("[DEBUG new_for_device] status={}, granted={}, raw_ptr={:p}", status, granted, raw_ptr);
 
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));

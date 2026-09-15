@@ -178,3 +178,13 @@ cargo run --example gna_demo -- --duration 5 --concurrency 2
 # デフォルト探索
 cargo run --example gna_demo
 ```
+
+## cli check
+
+```bash
+# コードチェック
+cargo clippy --fix  --all --allow-dirty
+
+# コード生成
+cargo coupling --ai --no-git
+```
