@@ -147,8 +147,8 @@ fn run_model_demo(
     const B: usize = 1;
 
     let weights = vec![1_i16; W * H];
-    let inputs = vec![1_i16; W * B];
-    let biases = vec![0_i32; H];
+    let inputs = [1_i16; W * B];
+    let biases = [0_i32; H];
     println!("[TRACE] 1. Allocating buffer...");
     let memory = match device.allocate_buffer(64 * 1024) {
         Ok(memory) => memory,
@@ -160,7 +160,7 @@ fn run_model_demo(
     let inputs_ptr = base as *mut i16;
     let outputs_ptr = unsafe { base.add(4096) } as *mut i32;
     let weights_ptr = unsafe { base.add(8192) } as *mut i16;
-    let biases_ptr = unsafe { base.add(12288) } as *mut i32;
+    let biases_ptr = unsafe { base.add(16384) } as *mut i32;
 
     println!("[TRACE] 3. Copying inputs, weights, biases into buffer...");
     unsafe {

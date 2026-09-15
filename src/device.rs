@@ -105,7 +105,7 @@ impl GnaDevice {
 
     /// Allocate a device-bound memory buffer.
     pub fn allocate_buffer(&self, size: usize) -> Result<GnaBuffer> {
-        GnaBuffer::new(&self.library, size)
+        GnaBuffer::new_for_device(&self.library, self.index, size)
     }
 
     /// Get device index.

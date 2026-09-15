@@ -53,10 +53,10 @@ impl GnaBuffer {
             return Err(GnaError::InvalidBufferSize(0));
         }
 
-        let alloc_for_device = library
-            .symbols()
-            .memory_alloc_for_device
-            .ok_or_else(|| GnaError::Other("Gna2MemoryAllocForDevice not supported by DLL".into()))?;
+        let alloc_for_device = match library.symbols().memory_alloc_for_device {
+            Some(f) => f,
+            None => return Self::new(library, size),
+        };
 
         let mut granted: u32 = 0;
         let mut raw_ptr: *mut c_void = std::ptr::null_mut();
