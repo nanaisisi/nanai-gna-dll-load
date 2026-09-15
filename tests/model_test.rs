@@ -1,4 +1,4 @@
-use nanai_gna_dll_rs::{
+use nanai_gna_dll_load::{
     Gna2DataType, Gna2OperationType, Gna2Shape, Gna2Tensor, Gna2TensorMode, GnaModelBuilder,
 };
 
@@ -51,8 +51,7 @@ fn test_model_builder_construction() {
     let w = Gna2Tensor::d2(8, 16, Gna2DataType::Int16, dummy_ptr);
     let b = Gna2Tensor::d1(8, Gna2DataType::Int32, dummy_ptr);
 
-    let _builder = GnaModelBuilder::new()
-        .add_fully_connected_affine(inp, out, w, b, None);
+    let _builder = GnaModelBuilder::new().add_fully_connected_affine(inp, out, w, b, None);
 
     // Verify builder builds safely (requires device to compile)
     assert_eq!(Gna2OperationType::FullyConnectedAffine as u32, 3);

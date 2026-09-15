@@ -2,7 +2,7 @@ use std::env;
 use std::path::PathBuf;
 use std::time::Duration;
 
-use nanai_gna_dll_rs::{
+use nanai_gna_dll_load::{
     Gna2AccelerationMode, Gna2DataType, Gna2Tensor, GnaDevice, GnaLibrary, GnaLoadTestConfig,
     GnaLoadTester, GnaModelBuilder, GnaRequestConfig,
 };

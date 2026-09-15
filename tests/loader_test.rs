@@ -3,7 +3,7 @@ use std::fs;
 use std::path::PathBuf;
 use tempfile::tempdir;
 
-use nanai_gna_dll_rs::{GnaError, GnaLibrary, GnaLibraryBuilder};
+use nanai_gna_dll_load::{GnaError, GnaLibrary, GnaLibraryBuilder};
 
 #[test]
 fn test_default_dll_name() {
@@ -42,10 +42,7 @@ fn test_load_from_env_var_not_set() {
 #[test]
 fn test_load_from_env_file_not_found() {
     unsafe {
-        env::set_var(
-            "TEST_GNA_NOT_FOUND_ENV",
-            "C:\\some_invalid_path\\gna.dll",
-        );
+        env::set_var("TEST_GNA_NOT_FOUND_ENV", "C:\\some_invalid_path\\gna.dll");
     }
     let res = GnaLibrary::load_from_env("TEST_GNA_NOT_FOUND_ENV");
     assert!(res.is_err());
@@ -113,7 +110,10 @@ fn test_builder_search_failed_reporting() {
 
 #[test]
 fn test_device_version_and_generations() {
-    use nanai_gna_dll_rs::{Gna2DeviceGeneration, Gna2DeviceVersion, Gna2InstrumentationUnit, Gna2InstrumentationMode, Gna2ModelExportComponent};
+    use nanai_gna_dll_load::{
+        Gna2DeviceGeneration, Gna2DeviceVersion, Gna2InstrumentationMode, Gna2InstrumentationUnit,
+        Gna2ModelExportComponent,
+    };
 
     assert_eq!(Gna2DeviceVersion::SOFTWARE_EMULATION.0, 0);
     assert_eq!(Gna2DeviceVersion::EMBEDDED_1_0.0, 0x10E);
@@ -123,6 +123,8 @@ fn test_device_version_and_generations() {
     assert_eq!(Gna2DeviceGeneration::Gen3_1 as u32, 0x310);
     assert_eq!(Gna2InstrumentationUnit::Cycles as u32, 2);
     assert_eq!(Gna2InstrumentationMode::Disabled as i32, -1);
-    assert_eq!(Gna2ModelExportComponent::ExternalBufferOutputDump as u32, 22);
+    assert_eq!(
+        Gna2ModelExportComponent::ExternalBufferOutputDump as u32,
+        22
+    );
 }
-

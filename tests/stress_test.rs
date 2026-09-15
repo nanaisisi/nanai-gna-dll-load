@@ -1,5 +1,5 @@
+use nanai_gna_dll_load::{GnaLoadTestConfig, GnaLoadTestReport, GnaUsageMonitor};
 use std::time::Duration;
-use nanai_gna_dll_rs::{GnaLoadTestConfig, GnaLoadTestReport, GnaUsageMonitor};
 
 #[test]
 fn test_load_test_config_builder() {
