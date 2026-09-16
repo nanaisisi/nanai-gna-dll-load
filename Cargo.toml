@@ -12,6 +12,7 @@ path = "src/lib.rs"
 
 [dependencies]
 libloading = "0.9.0"
+chrono = "0.4.45"
 thiserror = "2.0.20"
 
 [dev-dependencies]

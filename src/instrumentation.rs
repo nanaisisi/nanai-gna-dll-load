@@ -134,7 +134,7 @@ impl GnaInstrumentationConfig {
             }
         }
 
-        let total = total.ok_or_else(|| {
+        let total: u64 = total.ok_or_else(|| {
             GnaError::Other("Missing HwTotalCycles instrumentation point".into())
         })?;
         let stall = stall.ok_or_else(|| {
@@ -153,7 +153,7 @@ impl GnaInstrumentationConfig {
     pub fn compute_performance_stats(&self) -> Result<GnaPerformanceStats> {
         let mut total = None;
         let mut stall = None;
-        let mut exec_time = None;
+        let mut exec_time :Option<u64> = None;
 
         for (&pt, &val) in self.points.iter().zip(self.results.iter()) {
             match pt {
