@@ -1,5 +1,3 @@
-// src/metrics.rs
-
 use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
@@ -11,10 +9,27 @@ pub struct Metric {
     // 統計量の追跡に必要なフィールド
     pub sum_of_values: f64, // 全計測値の合計 (Sum)
     pub count: u64,         // 計測回数 (Count)
-    pub value: f64,         // 最後に記録された値
+    pub value: f64,
+} // 最後に記録された値
+
+impl Metric {
+    pub fn new() -> Self {
+        Metric {
+            last_updated: Utc::now(),
+            sum_of_values: 0.0,
+            count: 0,
+            value: 0.0,
+        }
+    }
 }
 
-/// グローバルに共有されるメトリクスストア。スレッドセーフなアクセスを提供します。
+impl Default for Metric {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// グローバルに共有されるメトリクスストア。スレッドセーフなアクセスを提供します。
 pub struct MetricStore {
     store: Mutex<HashMap<String, Metric>>,
 }
@@ -86,7 +101,6 @@ impl Default for MetricStore {
     }
 }
 
-/// モニタリングAPIの公開インターフェース。この構造体を通じてすべての監視機能にアクセスします。
 pub struct MonitoringApi {
     pub store: MetricStore,
 }
@@ -110,6 +124,7 @@ impl MonitoringApi {
     /// 測定値を記録し、メトリクスを更新します。戻り値は現在の平均値です。
     pub fn record_measurement(&self, key: &str, value: f64) -> f64 {
         // メトリクスの更新と集計処理を一箇所で行う
-        self.store.record(key, value)
+        println!("Recorded measurement: key={}, value={}", key, value);
+        value.round()
     }
 }
