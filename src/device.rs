@@ -1,7 +1,7 @@
 use crate::error::{GnaError, Result};
 use crate::loader::GnaLibrary;
 use crate::memory::GnaBuffer;
-use crate::types::{Gna2DeviceVersion, GNA2_STATUS_SUCCESS};
+use crate::types::{GNA2_STATUS_SUCCESS, Gna2DeviceVersion};
 
 /// Represents an open GNA device handle.
 ///
@@ -34,8 +34,7 @@ impl GnaDevice {
         }
 
         let mut version = Gna2DeviceVersion::default();
-        let status =
-            unsafe { (library.symbols().device_get_version)(device_index, &mut version) };
+        let status = unsafe { (library.symbols().device_get_version)(device_index, &mut version) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }
@@ -126,10 +125,16 @@ impl GnaDevice {
 
 impl Drop for GnaDevice {
     fn drop(&mut self) {
-        println!("    [DEBUG GnaDevice::drop] Closing device index {}", self.index);
+        println!(
+            "    [DEBUG GnaDevice::drop] Closing device index {}",
+            self.index
+        );
         unsafe {
             let status = (self.library.symbols().device_close)(self.index);
-            println!("    [DEBUG GnaDevice::drop] device_close returned status {}", status);
+            println!(
+                "    [DEBUG GnaDevice::drop] device_close returned status {}",
+                status
+            );
         }
     }
 }

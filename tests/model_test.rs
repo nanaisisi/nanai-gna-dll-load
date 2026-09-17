@@ -1,5 +1,6 @@
 use nanai_gna_dll_load::{
-    Gna2DataType, Gna2OperationType, Gna2Shape, Gna2Tensor, Gna2TensorMode, GnaModelBuilder,
+    model::GnaModelBuilder,
+    types::{Gna2DataType, Gna2OperationType, Gna2Shape, Gna2Tensor, Gna2TensorMode},
 };
 
 #[test]

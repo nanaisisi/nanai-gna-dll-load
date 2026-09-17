@@ -34,10 +34,16 @@ mod tests {
 
         // 4. 全メトリクス取得の検証
         let metrics = api.store.get_all_metrics();
-        assert_eq!(metrics.len(), 2, "Should have exactly two unique metrics recorded.");
+        assert_eq!(
+            metrics.len(),
+            2,
+            "Should have exactly two unique metrics recorded."
+        );
         assert!(metrics.contains_key(key1));
         assert!(metrics.contains_key(key2));
 
-        println!("Metrics test completed successfully: Latency tracked and Request Count incremented (conceptually).");
+        println!(
+            "Metrics test completed successfully: Latency tracked and Request Count incremented (conceptually)."
+        );
     }
 }

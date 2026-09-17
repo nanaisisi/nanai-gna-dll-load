@@ -14,15 +14,24 @@ mod tests {
 
         // 1. 最初の記録 (Count=1, Sum=100.0, Avg=100.0)
         let avg1 = api.record_measurement(key, 100.0);
-        assert!((avg1 - 100.0).abs() < 0.001, "Average after first recording failed.");
+        assert!(
+            (avg1 - 100.0).abs() < 0.001,
+            "Average after first recording failed."
+        );
 
         // 2. 二回目の記録 (Count=2, Sum=(100+50)=150.0, Avg=75.0)
         let avg2 = api.record_measurement(key, 50.0);
-        assert!((avg2 - 75.0).abs() < 0.001, "Average after second recording failed.");
+        assert!(
+            (avg2 - 75.0).abs() < 0.001,
+            "Average after second recording failed."
+        );
 
         // 3. 三回目の記録 (Count=3, Sum=(150+20)=170.0, Avg=170/3 ≈ 56.66...)
         let avg3 = api.record_measurement(key, 20.0);
-        assert!((avg3 - 170.0 / 3.0).abs() < 0.001, "Average after third recording failed.");
+        assert!(
+            (avg3 - 170.0 / 3.0).abs() < 0.001,
+            "Average after third recording failed."
+        );
 
         // 4. 全メトリクスの確認
         let metrics = api.store.get_all_metrics();
@@ -30,7 +39,10 @@ mod tests {
 
         let final_metric = metrics.get(key).expect("Key must exist after recording.");
         assert_eq!(final_metric.count, 3, "Total count is incorrect.");
-        assert!((final_metric.sum_of_values - 170.0).abs() < 0.001, "Total sum is incorrect.");
+        assert!(
+            (final_metric.sum_of_values - 170.0).abs() < 0.001,
+            "Total sum is incorrect."
+        );
 
         println!("Success: Average tracking logic verified across multiple calls.");
     }

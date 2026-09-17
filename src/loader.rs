@@ -48,8 +48,8 @@ impl GnaLibrary {
     /// Attempt to load the GNA dynamic library from an explicit file path.
     pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path_ref = path.as_ref();
-        let lib = unsafe { libloading::Library::new(path_ref) }
-            .map_err(GnaError::LibraryLoadError)?;
+        let lib =
+            unsafe { libloading::Library::new(path_ref) }.map_err(GnaError::LibraryLoadError)?;
 
         let symbols = GnaSymbolTable::load(&lib)?;
 
@@ -131,7 +131,8 @@ impl GnaLibrary {
             .ok_or_else(|| GnaError::Other("Gna2GetLibraryVersion is not supported".into()))?;
 
         let mut buf = vec![0u8; 128];
-        let status = unsafe { version_fn(buf.as_mut_ptr() as *mut std::ffi::c_char, buf.len() as u32) };
+        let status =
+            unsafe { version_fn(buf.as_mut_ptr() as *mut std::ffi::c_char, buf.len() as u32) };
         if status != crate::types::GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }

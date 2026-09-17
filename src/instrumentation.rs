@@ -1,8 +1,8 @@
-use crate::error::{GnaError, Result};
+use crate::error::GnaError;
 use crate::loader::GnaLibrary;
+use crate::metrics::MonitoringApi;
 use crate::types::{
-    Gna2InstrumentationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
-    GNA2_STATUS_SUCCESS,
+    GNA2_STATUS_SUCCESS, Gna2InstrumentationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
 
 /// High-level safe wrapper for GNA Instrumentation Configuration.
@@ -18,7 +18,7 @@ impl GnaInstrumentationConfig {
     pub fn create(
         library: &GnaLibrary,
         points: &[Gna2InstrumentationPoint],
-    ) -> Result<Self> {
+    ) -> Result<Self, GnaError> {
         if points.is_empty() || points.len() > 15 {
             return Err(GnaError::Other(
                 "Instrumentation points count must be in range [1, 15]".into(),
@@ -57,7 +57,7 @@ impl GnaInstrumentationConfig {
     }
 
     /// Assign this instrumentation configuration to a request configuration.
-    pub fn assign_to_request_config(&self, request_config_id: u32) -> Result<()> {
+    pub fn assign_to_request_config(&self, request_config_id: u32) -> Result<(), GnaError> {
         let assign_fn = self
             .library
             .symbols()
@@ -76,7 +76,7 @@ impl GnaInstrumentationConfig {
     }
 
     /// Set instrumentation measurement unit (Microseconds, Milliseconds, Cycles).
-    pub fn set_unit(&mut self, unit: Gna2InstrumentationUnit) -> Result<()> {
+    pub fn set_unit(&mut self, unit: Gna2InstrumentationUnit) -> Result<(), GnaError> {
         let set_unit_fn = self
             .library
             .symbols()
@@ -93,7 +93,7 @@ impl GnaInstrumentationConfig {
     }
 
     /// Set hardware instrumentation mode (TotalStall, WaitForDmaCompletion, etc.).
-    pub fn set_mode(&mut self, mode: Gna2InstrumentationMode) -> Result<()> {
+    pub fn set_mode(&mut self, mode: Gna2InstrumentationMode) -> Result<(), GnaError> {
         let set_mode_fn = self
             .library
             .symbols()
@@ -122,7 +122,7 @@ impl GnaInstrumentationConfig {
     /// Calculate hardware utilization `(TotalCycles - StallCycles) / TotalCycles`.
     ///
     /// Requires `HwTotalCycles` and `HwStallCycles` to be included in points.
-    pub fn compute_hw_usage(&self) -> Result<f64> {
+    pub fn compute_hw_usage(&self) -> Result<f64, GnaError> {
         let mut total = None;
         let mut stall = None;
 
@@ -134,26 +134,23 @@ impl GnaInstrumentationConfig {
             }
         }
 
-        let total: u64 = total.ok_or_else(|| {
-            GnaError::Other("Missing HwTotalCycles instrumentation point".into())
-        })?;
-        let stall = stall.ok_or_else(|| {
-            GnaError::Other("Missing HwStallCycles instrumentation point".into())
-        })?;
+        let total: u64 = total
+            .ok_or_else(|| GnaError::Other("Missing HwTotalCycles instrumentation point".into()))?;
+        let stall = stall
+            .ok_or_else(|| GnaError::Other("Missing HwStallCycles instrumentation point".into()))?;
 
         if total == 0 {
             return Err(GnaError::Other("HwTotalCycles is zero".into()));
         }
 
-        let active = total.saturating_sub(stall);
-        Ok((active as f64) / (total as f64))
+        Ok((total.saturating_sub(stall) as f64) / (total as f64))
     }
 
-    /// Compute detailed performance statistics from instrumentation points and results.
-    pub fn compute_performance_stats(&self) -> Result<GnaPerformanceStats> {
+    /// Compute detailed performance statistics from instrumentation points and results, AND record key metrics.
+    pub fn compute_performance_stats(&self) -> Result<GnaPerformanceStats, GnaError> {
         let mut total = None;
         let mut stall = None;
-        let mut exec_time :Option<u64> = None;
+        let mut exec_time: Option<u64> = None;
 
         for (&pt, &val) in self.points.iter().zip(self.results.iter()) {
             match pt {
@@ -164,12 +161,10 @@ impl GnaInstrumentationConfig {
             }
         }
 
-        let total_cycles = total.ok_or_else(|| {
-            GnaError::Other("Missing HwTotalCycles instrumentation point".into())
-        })?;
-        let stall_cycles = stall.ok_or_else(|| {
-            GnaError::Other("Missing HwStallCycles instrumentation point".into())
-        })?;
+        let total_cycles = total
+            .ok_or_else(|| GnaError::Other("Missing HwTotalCycles instrumentation point".into()))?;
+        let stall_cycles = stall
+            .ok_or_else(|| GnaError::Other("Missing HwStallCycles instrumentation point".into()))?;
 
         let active_cycles = total_cycles.saturating_sub(stall_cycles);
         let hw_usage_ratio = if total_cycles > 0 {
@@ -177,6 +172,16 @@ impl GnaInstrumentationConfig {
         } else {
             0.0
         };
+
+        // --- Monitoring Integration Start ---
+        let monitoring_api = MonitoringApi::get_instance();
+        monitoring_api.record_measurement("gna_total_cycles", total_cycles as f64);
+        monitoring_api.record_measurement("gna_stall_cycles", stall_cycles as f64);
+        monitoring_api.record_measurement("gna_active_cycles", active_cycles as f64);
+        if let Some(t) = exec_time {
+            monitoring_api.record_measurement("gna_exec_time", t as f64);
+        }
+        // --- Monitoring Integration End ---
 
         Ok(GnaPerformanceStats {
             total_cycles,
@@ -236,9 +241,15 @@ impl GnaUsageMonitor {
     /// Record a single inference performance measurement.
     pub fn record(&mut self, stats: &GnaPerformanceStats) {
         self.count += 1;
-        self.cumulative_total_cycles = self.cumulative_total_cycles.saturating_add(stats.total_cycles);
-        self.cumulative_stall_cycles = self.cumulative_stall_cycles.saturating_add(stats.stall_cycles);
-        self.cumulative_active_cycles = self.cumulative_active_cycles.saturating_add(stats.active_cycles);
+        self.cumulative_total_cycles = self
+            .cumulative_total_cycles
+            .saturating_add(stats.total_cycles);
+        self.cumulative_stall_cycles = self
+            .cumulative_stall_cycles
+            .saturating_add(stats.stall_cycles);
+        self.cumulative_active_cycles = self
+            .cumulative_active_cycles
+            .saturating_add(stats.active_cycles);
 
         if let Some(t) = stats.execution_time {
             self.cumulative_exec_time = self.cumulative_exec_time.saturating_add(t);

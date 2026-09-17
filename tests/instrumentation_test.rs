@@ -1,4 +1,4 @@
-use nanai_gna_dll_load::{GnaPerformanceStats, GnaUsageMonitor};
+use nanai_gna_dll_load::instrumentation::{GnaPerformanceStats, GnaUsageMonitor};
 
 #[test]
 fn test_performance_stats_calculation() {

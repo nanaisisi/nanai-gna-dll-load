@@ -3,7 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 use tempfile::tempdir;
 
-use nanai_gna_dll_load::{GnaError, GnaLibrary, GnaLibraryBuilder};
+use nanai_gna_dll_load::{
+    error::GnaError,
+    loader::{GnaLibrary, GnaLibraryBuilder},
+};
 
 #[test]
 fn test_default_dll_name() {
@@ -110,7 +113,7 @@ fn test_builder_search_failed_reporting() {
 
 #[test]
 fn test_device_version_and_generations() {
-    use nanai_gna_dll_load::{
+    use nanai_gna_dll_load::types::{
         Gna2DeviceGeneration, Gna2DeviceVersion, Gna2InstrumentationMode, Gna2InstrumentationUnit,
         Gna2ModelExportComponent,
     };

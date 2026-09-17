@@ -1,8 +1,8 @@
 // src/metrics.rs
 
+use chrono::{DateTime, Utc};
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
-use chrono::{DateTime, Utc};
 
 /// モニタリングデータ構造。統計情報を追跡するための要素を持ちます。
 #[derive(Debug, Clone)]
@@ -10,7 +10,8 @@ pub struct Metric {
     pub last_updated: DateTime<Utc>,
     // 統計量の追跡に必要なフィールド
     pub sum_of_values: f64, // 全計測値の合計 (Sum)
-    pub count: u64,        // 計測回数 (Count)
+    pub count: u64,         // 計測回数 (Count)
+    pub value: f64,         // 最後に記録された値
 }
 
 /// グローバルに共有されるメトリクスストア。スレッドセーフなアクセスを提供します。
@@ -34,6 +35,7 @@ impl MetricStore {
             last_updated: Utc::now(),
             sum_of_values: 0.0,
             count: 0,
+            value: 0.0,
         })
     }
 
@@ -47,16 +49,22 @@ impl MetricStore {
             metric.last_updated = Utc::now();
         } else {
             let now = Utc::now();
-            store.insert(key.to_string(), Metric {
-                last_updated: now,
-                sum_of_values: new_value, // 初回は値自体が合計となる
-                count: 1,
-            });
+            store.insert(
+                key.to_string(),
+                Metric {
+                    last_updated: now,
+                    sum_of_values: new_value, // 初回は値自体が合計となる
+                    count: 1,
+                    value: new_value,
+                },
+            );
         }
 
         // 計算された現在の平均値を返します。Countが0の場合は発生しないため、安全に計算できます。
 
-        self.get_metric(key).map(|m| m.sum_of_values / (m.count as f64)).unwrap_or(0.0)
+        self.get_metric(key)
+            .map(|m| m.sum_of_values / (m.count as f64))
+            .unwrap_or(0.0)
     }
 
     /// 指定されたキーの最新メトリクス（平均値を含む）を取得します。
@@ -73,9 +81,9 @@ impl MetricStore {
 }
 
 impl Default for MetricStore {
-     fn default() -> Self {
-         Self::new()
-     }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 /// モニタリングAPIの公開インターフェース。この構造体を通じてすべての監視機能にアクセスします。
@@ -88,8 +96,8 @@ impl MonitoringApi {
     pub fn get_instance() -> &'static MonitoringApi {
         // OnceLockを使って静的なシングルトンインスタンスを管理
         static INSTANCE: OnceLock<MonitoringApi> = OnceLock::new();
-        INSTANCE.get_or_init(|| {
-            MonitoringApi { store: MetricStore::new() }
+        INSTANCE.get_or_init(|| MonitoringApi {
+            store: MetricStore::new(),
         })
     }
 

@@ -97,20 +97,50 @@ impl GnaLoadTestReport {
         println!("==================================================");
         println!("  Completed Inferences : {}", self.completed_inferences);
         println!("  Failed Inferences    : {}", self.failed_inferences);
-        println!("  Elapsed Time         : {:.3} s", self.elapsed_time.as_secs_f64());
-        println!("  Throughput           : {:.2} inferences/sec", self.inferences_per_second);
-        println!("  Latency (Min)        : {:.3} ms", self.latency_min.as_secs_f64() * 1000.0);
-        println!("  Latency (Avg)        : {:.3} ms", self.latency_avg.as_secs_f64() * 1000.0);
-        println!("  Latency (Max)        : {:.3} ms", self.latency_max.as_secs_f64() * 1000.0);
+        println!(
+            "  Elapsed Time         : {:.3} s",
+            self.elapsed_time.as_secs_f64()
+        );
+        println!(
+            "  Throughput           : {:.2} inferences/sec",
+            self.inferences_per_second
+        );
+        println!(
+            "  Latency (Min)        : {:.3} ms",
+            self.latency_min.as_secs_f64() * 1000.0
+        );
+        println!(
+            "  Latency (Avg)        : {:.3} ms",
+            self.latency_avg.as_secs_f64() * 1000.0
+        );
+        println!(
+            "  Latency (Max)        : {:.3} ms",
+            self.latency_max.as_secs_f64() * 1000.0
+        );
 
         if self.usage_monitor.inference_count() > 0 {
             println!("--------------------------------------------------");
             println!("  Hardware Instrumentation Metrics:");
-            println!("  Tracked Inferences   : {}", self.usage_monitor.inference_count());
-            println!("  Cumulative Total     : {} cycles", self.usage_monitor.cumulative_total_cycles());
-            println!("  Cumulative Stall     : {} cycles", self.usage_monitor.cumulative_stall_cycles());
-            println!("  Cumulative Active    : {} cycles", self.usage_monitor.cumulative_active_cycles());
-            println!("  Weighted HW Usage    : {:.2}%", self.usage_monitor.cumulative_hw_usage_percentage());
+            println!(
+                "  Tracked Inferences   : {}",
+                self.usage_monitor.inference_count()
+            );
+            println!(
+                "  Cumulative Total     : {} cycles",
+                self.usage_monitor.cumulative_total_cycles()
+            );
+            println!(
+                "  Cumulative Stall     : {} cycles",
+                self.usage_monitor.cumulative_stall_cycles()
+            );
+            println!(
+                "  Cumulative Active    : {} cycles",
+                self.usage_monitor.cumulative_active_cycles()
+            );
+            println!(
+                "  Weighted HW Usage    : {:.2}%",
+                self.usage_monitor.cumulative_hw_usage_percentage()
+            );
             if let Some(avg_t) = self.usage_monitor.average_execution_time() {
                 println!("  Avg Hardware Time    : {:.2} cycles/us", avg_t);
             }
@@ -155,16 +185,20 @@ impl GnaLoadTester {
 
         while completed + failed < max_iterations {
             if let Some(dur) = max_duration
-                && start_time.elapsed() >= dur {
-                    break;
-                }
+                && start_time.elapsed() >= dur
+            {
+                break;
+            }
 
             // Enqueue up to concurrency limit
-            while in_flight.len() < concurrency && (completed + failed + in_flight.len()) < max_iterations {
+            while in_flight.len() < concurrency
+                && (completed + failed + in_flight.len()) < max_iterations
+            {
                 if let Some(dur) = max_duration
-                    && start_time.elapsed() >= dur {
-                        break;
-                    }
+                    && start_time.elapsed() >= dur
+                {
+                    break;
+                }
 
                 let req_start = Instant::now();
                 match request_config.enqueue() {
@@ -203,9 +237,10 @@ impl GnaLoadTester {
                     }
 
                     if self.config.track_hw_usage
-                        && let Ok(stats) = request_config.get_performance_stats() {
-                            usage_monitor.record(&stats);
-                        }
+                        && let Ok(stats) = request_config.get_performance_stats()
+                    {
+                        usage_monitor.record(&stats);
+                    }
                 }
                 Err(_) => {
                     failed += 1;
@@ -228,9 +263,10 @@ impl GnaLoadTester {
                     }
 
                     if self.config.track_hw_usage
-                        && let Ok(stats) = request_config.get_performance_stats() {
-                            usage_monitor.record(&stats);
-                        }
+                        && let Ok(stats) = request_config.get_performance_stats()
+                    {
+                        usage_monitor.record(&stats);
+                    }
                 }
                 Err(_) => {
                     failed += 1;

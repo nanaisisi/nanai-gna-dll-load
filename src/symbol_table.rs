@@ -69,10 +69,8 @@ pub type FnGna2InstrumentationConfigCreate = unsafe extern "C" fn(
     results: *mut u64,
     instrumentation_config_id: *mut u32,
 ) -> Gna2Status;
-pub type FnGna2InstrumentationConfigAssignToRequestConfig = unsafe extern "C" fn(
-    instrumentation_config_id: u32,
-    request_config_id: u32,
-) -> Gna2Status;
+pub type FnGna2InstrumentationConfigAssignToRequestConfig =
+    unsafe extern "C" fn(instrumentation_config_id: u32, request_config_id: u32) -> Gna2Status;
 pub type FnGna2InstrumentationConfigSetUnit = unsafe extern "C" fn(
     instrumentation_config_id: u32,
     instrumentation_unit: Gna2InstrumentationUnit,
@@ -88,8 +86,7 @@ pub type FnGna2ModelExportConfigCreate = unsafe extern "C" fn(
     user_allocator: Gna2UserAllocator,
     export_config_id: *mut u32,
 ) -> Gna2Status;
-pub type FnGna2ModelExportConfigRelease =
-    unsafe extern "C" fn(export_config_id: u32) -> Gna2Status;
+pub type FnGna2ModelExportConfigRelease = unsafe extern "C" fn(export_config_id: u32) -> Gna2Status;
 pub type FnGna2ModelExportConfigSetSource = unsafe extern "C" fn(
     export_config_id: u32,
     source_device_index: u32,
@@ -105,8 +102,7 @@ pub type FnGna2ModelExport = unsafe extern "C" fn(
     export_buffer: *mut *mut c_void,
     export_buffer_size: *mut u32,
 ) -> Gna2Status;
-pub type FnGna2ModelOverrideAlignment =
-    unsafe extern "C" fn(new_alignment: u32) -> Gna2Status;
+pub type FnGna2ModelOverrideAlignment = unsafe extern "C" fn(new_alignment: u32) -> Gna2Status;
 
 pub type FnGna2ModelCreate = unsafe extern "C" fn(
     device_index: u32,
@@ -221,15 +217,13 @@ impl GnaSymbolTable {
         let device_close: FnGna2DeviceClose =
             load_required(lib, b"Gna2DeviceClose\0", "Gna2DeviceClose")?;
 
-        let device_set_number_of_threads =
-            load_optional(lib, b"Gna2DeviceSetNumberOfThreads\0");
+        let device_set_number_of_threads = load_optional(lib, b"Gna2DeviceSetNumberOfThreads\0");
 
         let get_library_version = load_optional(lib, b"Gna2GetLibraryVersion\0");
 
         let memory_alloc: FnGna2MemoryAlloc =
             load_required(lib, b"Gna2MemoryAlloc\0", "Gna2MemoryAlloc")?;
-        let memory_alloc_for_device =
-            load_optional(lib, b"Gna2MemoryAllocForDevice\0");
+        let memory_alloc_for_device = load_optional(lib, b"Gna2MemoryAllocForDevice\0");
         let memory_free: FnGna2MemoryFree =
             load_required(lib, b"Gna2MemoryFree\0", "Gna2MemoryFree")?;
         let memory_set_tag = load_optional(lib, b"Gna2MemorySetTag\0");
@@ -277,8 +271,7 @@ impl GnaSymbolTable {
         let model_override_alignment = load_optional(lib, b"Gna2ModelOverrideAlignment\0");
 
         let status_get_message = load_optional(lib, b"Gna2StatusGetMessage\0");
-        let status_get_max_message_length =
-            load_optional(lib, b"Gna2StatusGetMaxMessageLength\0");
+        let status_get_max_message_length = load_optional(lib, b"Gna2StatusGetMaxMessageLength\0");
 
         Ok(Self {
             device_get_count,
@@ -322,4 +315,3 @@ impl GnaSymbolTable {
         })
     }
 }
-

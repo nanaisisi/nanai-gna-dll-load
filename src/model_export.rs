@@ -3,7 +3,7 @@ use std::ffi::c_void;
 use crate::error::{GnaError, Result};
 use crate::loader::GnaLibrary;
 use crate::types::{
-    Gna2DeviceVersion, Gna2ModelExportComponent, Gna2UserAllocator, GNA2_STATUS_SUCCESS,
+    GNA2_STATUS_SUCCESS, Gna2DeviceVersion, Gna2ModelExportComponent, Gna2UserAllocator,
 };
 
 /// High-level safe wrapper for GNA Model Export configuration and execution.
@@ -18,7 +18,9 @@ impl GnaModelExportConfig {
         let create_fn = library
             .symbols()
             .model_export_config_create
-            .ok_or_else(|| GnaError::Other("Gna2ModelExportConfigCreate is not supported".into()))?;
+            .ok_or_else(|| {
+                GnaError::Other("Gna2ModelExportConfigCreate is not supported".into())
+            })?;
 
         let mut export_config_id: u32 = 0;
         let status = unsafe { create_fn(allocator, &mut export_config_id) };
@@ -42,13 +44,8 @@ impl GnaModelExportConfig {
                 GnaError::Other("Gna2ModelExportConfigSetSource is not supported".into())
             })?;
 
-        let status = unsafe {
-            set_source_fn(
-                self.export_config_id,
-                source_device_index,
-                source_model_id,
-            )
-        };
+        let status =
+            unsafe { set_source_fn(self.export_config_id, source_device_index, source_model_id) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }
@@ -83,8 +80,7 @@ impl GnaModelExportConfig {
         let mut buffer: *mut c_void = std::ptr::null_mut();
         let mut size: u32 = 0;
 
-        let status =
-            unsafe { export_fn(self.export_config_id, component, &mut buffer, &mut size) };
+        let status = unsafe { export_fn(self.export_config_id, component, &mut buffer, &mut size) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }

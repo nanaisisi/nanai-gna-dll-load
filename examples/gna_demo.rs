@@ -3,8 +3,12 @@ use std::path::PathBuf;
 use std::time::Duration;
 
 use nanai_gna_dll_load::{
-    Gna2AccelerationMode, Gna2DataType, Gna2Tensor, GnaDevice, GnaLibrary, GnaLoadTestConfig,
-    GnaLoadTester, GnaModelBuilder, GnaRequestConfig,
+    device::GnaDevice,
+    inference::GnaRequestConfig,
+    loader::GnaLibrary,
+    model::GnaModelBuilder,
+    stress::{GnaLoadTestConfig, GnaLoadTester},
+    types::{Gna2AccelerationMode, Gna2DataType, Gna2Tensor},
 };
 
 fn print_usage(program: &str) {
@@ -154,7 +158,11 @@ fn run_model_demo(
         Ok(memory) => memory,
         Err(error) => return eprintln!("Failed to allocate model memory: {error}"),
     };
-    println!("[TRACE] 2. Buffer allocated at {:p}, size {}", memory.as_raw_ptr(), memory.len());
+    println!(
+        "[TRACE] 2. Buffer allocated at {:p}, size {}",
+        memory.as_raw_ptr(),
+        memory.len()
+    );
 
     let base = memory.as_raw_ptr() as *mut u8;
     let inputs_ptr = base as *mut i16;

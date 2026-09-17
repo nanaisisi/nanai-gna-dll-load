@@ -5,8 +5,8 @@ use crate::device::GnaDevice;
 use crate::error::{GnaError, Result};
 use crate::loader::GnaLibrary;
 use crate::types::{
-    Gna2Model, Gna2ModelError, Gna2Operation, Gna2OperationType, Gna2Tensor,
-    GNA2_STATUS_MODEL_ERROR_UNAVAILABLE, GNA2_STATUS_SUCCESS,
+    GNA2_STATUS_MODEL_ERROR_UNAVAILABLE, GNA2_STATUS_SUCCESS, Gna2Model, Gna2ModelError,
+    Gna2Operation, Gna2OperationType, Gna2Tensor,
 };
 
 #[link(name = "kernel32")]
@@ -69,7 +69,10 @@ impl GnaModel {
             return None;
         }
 
-        println!("    [DEBUG get_last_error_message] status={}, error_desc = {:#?}", status, error_desc);
+        println!(
+            "    [DEBUG get_last_error_message] status={}, error_desc = {:#?}",
+            status, error_desc
+        );
 
         let mut buf = vec![0 as c_char; max_len as usize];
         let status = unsafe { get_msg(&error_desc, buf.as_mut_ptr(), max_len) };
@@ -137,15 +140,16 @@ impl GnaModelBuilder {
         activation: Option<Gna2Tensor>,
     ) -> Self {
         let act = activation.unwrap_or_else(Gna2Tensor::disabled);
-        self.layers.push(LayerDefinition::FullyConnectedAffine(Box::new(
-            FullyConnectedAffineLayer {
-                input: inputs,
-                output: outputs,
-                weights,
-                biases,
-                activation: act,
-            },
-        )));
+        self.layers
+            .push(LayerDefinition::FullyConnectedAffine(Box::new(
+                FullyConnectedAffineLayer {
+                    input: inputs,
+                    output: outputs,
+                    weights,
+                    biases,
+                    activation: act,
+                },
+            )));
         self
     }
 
@@ -164,7 +168,9 @@ impl GnaModelBuilder {
             .ok_or_else(|| GnaError::Other("Gna2ModelCreate is not supported by DLL".into()))?;
 
         if self.layers.is_empty() {
-            return Err(GnaError::Other("Model must contain at least one layer".into()));
+            return Err(GnaError::Other(
+                "Model must contain at least one layer".into(),
+            ));
         }
 
         let mut operations: Vec<Gna2Operation> = Vec::with_capacity(self.layers.len());
@@ -174,7 +180,8 @@ impl GnaModelBuilder {
             match layer {
                 LayerDefinition::FullyConnectedAffine(fca) => {
                     let mut op = Gna2Operation::default();
-                    if let Some(fca_init) = library.symbols().operation_init_fully_connected_affine {
+                    if let Some(fca_init) = library.symbols().operation_init_fully_connected_affine
+                    {
                         let status = unsafe {
                             fca_init(
                                 &mut op,
@@ -225,29 +232,39 @@ impl GnaModelBuilder {
             operations: operations.as_mut_ptr(),
         };
 
-        println!("    [DEBUG] Preparing to call Gna2ModelCreate with {} operations", operations.len());
+        println!(
+            "    [DEBUG] Preparing to call Gna2ModelCreate with {} operations",
+            operations.len()
+        );
         for (op_idx, op) in operations.iter().enumerate() {
-            println!("    [DEBUG] Op[{}] type: {:?}, operands count: {}, operands ptr: {:p}",
-                op_idx, op.operation_type, op.number_of_operands, op.operands);
+            println!(
+                "    [DEBUG] Op[{}] type: {:?}, operands count: {}, operands ptr: {:p}",
+                op_idx, op.operation_type, op.number_of_operands, op.operands
+            );
             for i in 0..op.number_of_operands as usize {
                 let tensor_ptr = unsafe { *op.operands.add(i) };
                 println!("      [DEBUG] operand[{}] ptr: {:p}", i, tensor_ptr);
                 if !tensor_ptr.is_null() {
                     let t = unsafe { &*tensor_ptr };
-                    println!("        dims: {}, [{}, {}, {}, ...], mode: {:?}, data_type: {:?}, data: {:p}",
+                    println!(
+                        "        dims: {}, [{}, {}, {}, ...], mode: {:?}, data_type: {:?}, data: {:p}",
                         t.shape.number_of_dimensions,
                         t.shape.dimensions[0],
                         t.shape.dimensions[1],
                         t.shape.dimensions[2],
                         t.mode,
                         t.data_type,
-                        t.data);
+                        t.data
+                    );
                 }
             }
         }
 
         let mut model_id: u32 = u32::MAX;
-        println!("    [DEBUG] Invoking model_create on device {}", device.index());
+        println!(
+            "    [DEBUG] Invoking model_create on device {}",
+            device.index()
+        );
         let status = unsafe { model_create(device.index(), &model_raw, &mut model_id) };
         println!("    [DEBUG] model_create returned status {}", status);
 
@@ -257,11 +274,18 @@ impl GnaModelBuilder {
                 let s_res = unsafe { status_msg_fn(status, sbuf.as_mut_ptr(), 256) };
                 if s_res == GNA2_STATUS_SUCCESS {
                     let c_str = unsafe { std::ffi::CStr::from_ptr(sbuf.as_ptr()) };
-                    println!("    [DEBUG] status_get_message: {}", c_str.to_string_lossy());
+                    println!(
+                        "    [DEBUG] status_get_message: {}",
+                        c_str.to_string_lossy()
+                    );
                 }
             }
             let detail = GnaModel::get_last_error_message(library).unwrap_or_else(|| {
-                format!("Failed to compile model on device {}. Status: {}", device.index(), status)
+                format!(
+                    "Failed to compile model on device {}. Status: {}",
+                    device.index(),
+                    status
+                )
             });
             return Err(GnaError::ModelCreationError { status, detail });
         }

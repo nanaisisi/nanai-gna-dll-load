@@ -15,10 +15,7 @@ pub enum GnaError {
     },
 
     #[error("GNA operation failed with status code {status}: {message}")]
-    StatusError {
-        status: i32,
-        message: String,
-    },
+    StatusError { status: i32, message: String },
 
     #[error("Device index {0} out of range (total devices: {1})")]
     DeviceIndexOutOfRange(u32, u32),
@@ -38,17 +35,16 @@ pub enum GnaError {
     #[error("Library file not found at path: {0}")]
     LibraryPathNotFound(std::path::PathBuf),
 
-    #[error("Could not find or load GNA library. Locations tried: {tried:?}. Last error: {last_error:?}")]
+    #[error(
+        "Could not find or load GNA library. Locations tried: {tried:?}. Last error: {last_error:?}"
+    )]
     LibrarySearchFailed {
         tried: Vec<std::path::PathBuf>,
         last_error: Option<String>,
     },
 
     #[error("GNA model creation failed (status: {status}): {detail}")]
-    ModelCreationError {
-        status: i32,
-        detail: String,
-    },
+    ModelCreationError { status: i32, detail: String },
 
     #[error("Operation error: {0}")]
     Other(String),

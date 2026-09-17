@@ -254,7 +254,10 @@ impl Gna2Shape {
             return 1;
         }
         let mut total = 1;
-        for &dimension in self.dimensions[..].iter().take(self.number_of_dimensions as usize) {
+        for &dimension in self.dimensions[..]
+            .iter()
+            .take(self.number_of_dimensions as usize)
+        {
             total *= dimension as usize;
         }
         total

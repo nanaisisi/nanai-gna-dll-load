@@ -4,7 +4,7 @@ use crate::error::{GnaError, Result};
 use crate::instrumentation::{GnaInstrumentationConfig, GnaPerformanceStats};
 use crate::loader::GnaLibrary;
 use crate::types::{
-    Gna2AccelerationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit, GNA2_STATUS_SUCCESS,
+    GNA2_STATUS_SUCCESS, Gna2AccelerationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
 
 /// High-level wrapper for GNA Request Configuration.
@@ -54,14 +54,8 @@ impl GnaRequestConfig {
                 GnaError::Other("Gna2RequestConfigSetOperandBuffer not supported".into())
             })?;
 
-        let status = unsafe {
-            set_buffer_fn(
-                self.config_id,
-                operation_index,
-                operand_index,
-                buffer_ptr,
-            )
-        };
+        let status =
+            unsafe { set_buffer_fn(self.config_id, operation_index, operand_index, buffer_ptr) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }
@@ -166,7 +160,10 @@ impl GnaRequestConfig {
     }
 
     /// Attach a custom instrumentation configuration to this request.
-    pub fn attach_instrumentation(&mut self, instrumentation: GnaInstrumentationConfig) -> Result<()> {
+    pub fn attach_instrumentation(
+        &mut self,
+        instrumentation: GnaInstrumentationConfig,
+    ) -> Result<()> {
         instrumentation.assign_to_request_config(self.config_id)?;
         self.instrumentation = Some(instrumentation);
         Ok(())
