@@ -12,7 +12,7 @@ use crate::symbol_table::GnaSymbolTable;
 /// remain valid as long as any device or buffer referencing this library is alive.
 #[derive(Clone)]
 pub struct GnaLibrary {
-    _lib: Arc<libloading::Library>,
+    _lib: Option<Arc<libloading::Library>>,
     symbols: Arc<GnaSymbolTable>,
     path: PathBuf,
 }
@@ -26,6 +26,16 @@ impl std::fmt::Debug for GnaLibrary {
 }
 
 impl GnaLibrary {
+    /// Create a GnaLibrary instance from a symbol table without loading a dynamic library.
+    /// Useful for testing, mocking, or static symbol tables.
+    pub fn from_symbol_table(symbols: GnaSymbolTable) -> Self {
+        Self {
+            _lib: None,
+            symbols: Arc::new(symbols),
+            path: PathBuf::from("mock_gna.dll"),
+        }
+    }
+
     /// Return the standard platform-specific DLL/shared library file name.
     /// - Windows: `"gna.dll"`
     /// - macOS: `"libgna.dylib"`
@@ -54,7 +64,7 @@ impl GnaLibrary {
         let symbols = GnaSymbolTable::load(&lib)?;
 
         Ok(Self {
-            _lib: Arc::new(lib),
+            _lib: Some(Arc::new(lib)),
             symbols: Arc::new(symbols),
             path: path_ref.to_path_buf(),
         })

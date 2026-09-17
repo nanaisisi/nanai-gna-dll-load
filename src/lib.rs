@@ -14,5 +14,4 @@ pub mod types;
 // Re-export core items at root for easy access.
 // Re-export updated types
 
-// Add new monitoring API components
-pub use crate::metrics::{MetricStore, MonitoringApi};
+pub use crate::metrics::{metric_store::MetricStore, monitoring_api::MonitoringApi};

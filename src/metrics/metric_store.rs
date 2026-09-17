@@ -1,33 +1,8 @@
-use chrono::{DateTime, Utc};
+use chrono::Utc;
 use std::collections::HashMap;
-use std::sync::{Mutex, OnceLock};
+use std::sync::Mutex;
 
-/// モニタリングデータ構造。統計情報を追跡するための要素を持ちます。
-#[derive(Debug, Clone)]
-pub struct Metric {
-    pub last_updated: DateTime<Utc>,
-    // 統計量の追跡に必要なフィールド
-    pub sum_of_values: f64, // 全計測値の合計 (Sum)
-    pub count: u64,         // 計測回数 (Count)
-    pub value: f64,
-} // 最後に記録された値
-
-impl Metric {
-    pub fn new() -> Self {
-        Metric {
-            last_updated: Utc::now(),
-            sum_of_values: 0.0,
-            count: 0,
-            value: 0.0,
-        }
-    }
-}
-
-impl Default for Metric {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+use crate::metrics::metric::Metric;
 
 // グローバルに共有されるメトリクスストア。スレッドセーフなアクセスを提供します。
 pub struct MetricStore {
@@ -101,30 +76,14 @@ impl Default for MetricStore {
     }
 }
 
-pub struct MonitoringApi {
-    pub store: MetricStore,
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-impl MonitoringApi {
-    /// 初期化関数。シングルトンパターンを適用し、アプリケーション全体で単一インスタンスを保証する。
-    pub fn get_instance() -> &'static MonitoringApi {
-        // OnceLockを使って静的なシングルトンインスタンスを管理
-        static INSTANCE: OnceLock<MonitoringApi> = OnceLock::new();
-        INSTANCE.get_or_init(|| MonitoringApi {
-            store: MetricStore::new(),
-        })
-    }
-
-    /// 新しいメトリクスを記録する（例：レイテンシ測定の開始）。
-    pub fn start_measurement(&self, key: &str) {
-        // 実際のロジックでは、この時点で計測コンテキスト（開始タイムスタンプ）をストアに格納すべきです。
-        println!("Monitoring started for key: {}", key);
-    }
-
-    /// 測定値を記録し、メトリクスを更新します。戻り値は現在の平均値です。
-    pub fn record_measurement(&self, key: &str, value: f64) -> f64 {
-        // メトリクスの更新と集計処理を一箇所で行う
-        println!("Recorded measurement: key={}, value={}", key, value);
-        value.round()
+    #[test]
+    fn test_metric_store() {
+        let store = MetricStore::new();
+        let avg = store.record("test", 10.0);
+        assert_eq!(avg, 10.0);
     }
 }

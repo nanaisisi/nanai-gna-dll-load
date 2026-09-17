@@ -1,6 +1,6 @@
 use crate::error::GnaError;
 use crate::loader::GnaLibrary;
-use crate::metrics::MonitoringApi;
+use crate::metrics::monitoring_api::MonitoringApi;
 use crate::types::{
     GNA2_STATUS_SUCCESS, Gna2InstrumentationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
