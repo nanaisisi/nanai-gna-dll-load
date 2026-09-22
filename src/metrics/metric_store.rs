@@ -32,29 +32,22 @@ impl MetricStore {
     /// メトリクスを記録し、その時点での平均値を返します。計測ロジックの唯一のエントリーポイントです。
     pub fn record(&self, key: &str, new_value: f64) -> f64 {
         let mut store = self.store.lock().unwrap();
-        if let Some(metric) = store.get_mut(key) {
-            // 統計更新ロジック：合計に加算し、カウントを増やす。
-            metric.sum_of_values += new_value;
-            metric.count += 1;
-            metric.last_updated = Utc::now();
-        } else {
-            let now = Utc::now();
-            store.insert(
-                key.to_string(),
-                Metric {
-                    last_updated: now,
-                    sum_of_values: new_value, // 初回は値自体が合計となる
-                    count: 1,
-                    value: new_value,
-                },
-            );
-        }
+        let metric = store
+            .entry(key.to_string())
+            .and_modify(|m| {
+                m.sum_of_values += new_value;
+                m.count += 1;
+                m.value = new_value;
+                m.last_updated = Utc::now();
+            })
+            .or_insert_with(|| Metric {
+                last_updated: Utc::now(),
+                sum_of_values: new_value,
+                count: 1,
+                value: new_value,
+            });
 
-        // 計算された現在の平均値を返します。Countが0の場合は発生しないため、安全に計算できます。
-
-        self.get_metric(key)
-            .map(|m| m.sum_of_values / (m.count as f64))
-            .unwrap_or(0.0)
+        metric.sum_of_values / (metric.count as f64)
     }
 
     /// 指定されたキーの最新メトリクス（平均値を含む）を取得します。

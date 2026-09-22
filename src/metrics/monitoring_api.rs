@@ -26,7 +26,7 @@ impl MonitoringApi {
     pub fn record_measurement(&self, key: &str, value: f64) -> f64 {
         // メトリクスの更新と集計処理を一箇所で行う
         println!("Recorded measurement: key={}, value={}", key, value);
-        value.round()
+        self.store.record(key, value)
     }
 }
 
@@ -43,7 +43,7 @@ mod tests {
     #[test]
     fn test_record_measurement() {
         let api = MonitoringApi::get_instance();
-        let value = api.record_measurement("test_key", 10.5);
-        assert_eq!(value, 11.0); // 10.5を四捨五入して11.0になることを確認
+        let value = api.record_measurement("test_key_api", 10.5);
+        assert_eq!(value, 10.5);
     }
 }

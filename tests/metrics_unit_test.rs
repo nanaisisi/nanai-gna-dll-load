@@ -3,18 +3,15 @@ mod tests {
     use nanai_gna_dll_load::MetricStore;
     use nanai_gna_dll_load::MonitoringApi;
 
-    // テスト用ヘルパー関数：APIのシングルトンインスタンスを取得する
-    fn setup() -> &'static MonitoringApi {
-        MonitoringApi::get_instance()
-    }
-
     fn setup_metric_store() -> MetricStore {
         MetricStore::new()
     }
 
     #[test]
     fn test_metric_store_averaging_logic() {
-        let api = setup();
+        let api = MonitoringApi {
+            store: MetricStore::new(),
+        };
         let key = "latency_average";
 
         // 1. 最初の記録 (Count=1, Sum=100.0, Avg=100.0)
@@ -94,25 +91,25 @@ mod tests {
 
         // Key A: 10 -> Avg=10
         store.record("A", 10.0);
-        assert!((store.get_metric("A").unwrap().sum_of_values / (1.0 * 10.0)).abs() < 1e-9);
+        assert!((store.get_metric("A").unwrap().sum_of_values - (1.0 * 10.0)).abs() < 1e-9);
 
         // Key B: 5 -> Avg=5
         store.record("B", 5.0);
-        assert!((store.get_metric("B").unwrap().sum_of_values / (1.0 * 5.0)).abs() < 1e-9);
+        assert!((store.get_metric("B").unwrap().sum_of_values - (1.0 * 5.0)).abs() < 1e-9);
 
         // Key A: 20 -> Avg=(10+20)/2 = 15
         store.record("A", 20.0);
-        assert!((store.get_metric("A").unwrap().sum_of_values / (2.0 * 15.0)).abs() < 1e-9);
+        assert!((store.get_metric("A").unwrap().sum_of_values - (2.0 * 15.0)).abs() < 1e-9);
 
         // Key B: 5 -> Avg=(5+5)/2 = 5
         store.record("B", 5.0);
-        assert!((store.get_metric("B").unwrap().sum_of_values / (2.0 * 5.0)).abs() < 1e-9);
+        assert!((store.get_metric("B").unwrap().sum_of_values - (2.0 * 5.0)).abs() < 1e-9);
 
         // 全てのメトリクスを検証
         let all = store.get_all_metrics();
         assert_eq!(all.len(), 2);
-        assert!((all.get("A").unwrap().sum_of_values / (2.0 * 15.0)).abs() < 1e-9);
-        assert!((all.get("B").unwrap().sum_of_values / (2.0 * 5.0)).abs() < 1e-9);
+        assert!((all.get("A").unwrap().sum_of_values - (2.0 * 15.0)).abs() < 1e-9);
+        assert!((all.get("B").unwrap().sum_of_values - (2.0 * 5.0)).abs() < 1e-9);
     }
 
     #[test]
@@ -133,7 +130,7 @@ mod tests {
         api1.record_measurement(key, value);
 
         // 検証: API2から読み出し、値が保持されているか
-        let retrieved_avg = api2.store.get_metric(key).unwrap().sum_of_values / (1.0 * 50.0);
+        let retrieved_avg = api2.store.get_metric(key).unwrap().sum_of_values / 1.0;
         assert!(
             (retrieved_avg - 50.0).abs() < 1e-9,
             "Singleton state should persist across calls."
@@ -141,7 +138,7 @@ mod tests {
 
         // 2回目：API2を通じて再記録
         api2.record_measurement(key, 100.0); // 新しい合計: 150.0 / Count: 2
-        let final_avg = api2.store.get_metric(key).unwrap().sum_of_values / (2.0 * 75.0);
+        let final_avg = api2.store.get_metric(key).unwrap().sum_of_values / 2.0;
         assert!(
             (final_avg - 75.0).abs() < 1e-9,
             "Singleton state must correctly accumulate."
