@@ -11,9 +11,9 @@ name = "nanai_gna_dll_load"
 path = "src/lib.rs"
 
 [dependencies]
-libloading = "0.9.0"
-jiff = { version = "1.0", features = ["serde", "tz-system"] }
-thiserror = "2.0.20"
+libloading = "0.9.1"
+jiff = { version = "1.0.1", features = ["serde", "tz-system"] }
+thiserror = "2.0.21"
 
 [dev-dependencies]
 tempfile = "3.27.0"
