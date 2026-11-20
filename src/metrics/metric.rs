@@ -1,9 +1,9 @@
-use chrono::{DateTime, Utc};
+use jiff::Timestamp;
 
 /// モニタリングデータ構造。統計情報を追跡するための要素を持ちます。
 #[derive(Debug, Clone)]
 pub struct Metric {
-    pub last_updated: DateTime<Utc>,
+    pub last_updated: Timestamp,
     // 統計量の追跡に必要なフィールド
     pub sum_of_values: f64, // 全計測値の合計 (Sum)
     pub count: u64,         // 計測回数 (Count)
@@ -13,7 +13,7 @@ pub struct Metric {
 impl Metric {
     pub fn new() -> Self {
         Metric {
-            last_updated: Utc::now(),
+            last_updated: Timestamp::now(),
             sum_of_values: 0.0,
             count: 0,
             value: 0.0,

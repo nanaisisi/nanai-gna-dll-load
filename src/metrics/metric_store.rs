@@ -1,4 +1,4 @@
-use chrono::Utc;
+use jiff::Timestamp;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -22,7 +22,7 @@ impl MetricStore {
         let store = self.store.lock().unwrap();
         // 初期化時はSum=0, Count=0で初期化します。
         store.get(key).cloned().unwrap_or_else(|| Metric {
-            last_updated: Utc::now(),
+            last_updated: Timestamp::now(),
             sum_of_values: 0.0,
             count: 0,
             value: 0.0,
@@ -38,10 +38,10 @@ impl MetricStore {
                 m.sum_of_values += new_value;
                 m.count += 1;
                 m.value = new_value;
-                m.last_updated = Utc::now();
+                m.last_updated = Timestamp::now();
             })
             .or_insert_with(|| Metric {
-                last_updated: Utc::now(),
+                last_updated: Timestamp::now(),
                 sum_of_values: new_value,
                 count: 1,
                 value: new_value,
