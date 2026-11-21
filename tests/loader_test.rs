@@ -547,6 +547,12 @@ fn test_load_from_env_and_env_or_path_success() {
     let _lock = ENV_LOCK.lock().unwrap();
     let dir = tempdir().unwrap();
     let compiled_dll = compile_cdylib(dir.path(), "mock", "direct_gna.dll", MINIMAL_MOCK_DLL_SRC);
+    let incomplete_dll = compile_cdylib(
+        dir.path(),
+        "env_incomplete",
+        "env_incomplete.dll",
+        MISSING_SYMBOL_DLL_SRC,
+    );
 
     let sub_dir = dir.path().join("sub_dir");
     fs::create_dir(&sub_dir).unwrap();
@@ -579,17 +585,53 @@ fn test_load_from_env_and_env_or_path_success() {
         other => panic!("Expected LibraryLoadError, got: {:?}", other),
     }
 
-    // load_from_env_or_path succeeds via env var even when fallback is missing
+    // Existing DLL missing required symbol in env var hits symbol table error via PathBuf instantiation
+    guard.set("TEST_LOAD_ENV_INCOMPLETE", &incomplete_dll);
+    match GnaLibrary::load_from_env("TEST_LOAD_ENV_INCOMPLETE").unwrap_err() {
+        GnaError::SymbolNotFound { symbol, .. } => assert_eq!(symbol, "Gna2MemoryFree"),
+        other => panic!("Expected SymbolNotFound, got: {:?}", other),
+    }
+
+    // load_from_env_or_path succeeds via env var for both (&str, &str) and (&str, &PathBuf)
     let lib = GnaLibrary::load_from_env_or_path("TEST_LOAD_ENV_FILE", "nonexistent_fallback.dll")
         .unwrap();
     assert_eq!(lib.path(), compiled_dll.as_path());
     drop(lib);
 
-    // load_from_env_or_path falls back to valid fallback path when env is unset
+    let lib = GnaLibrary::load_from_env_or_path("TEST_LOAD_ENV_FILE", &compiled_dll).unwrap();
+    assert_eq!(lib.path(), compiled_dll.as_path());
+    drop(lib);
+
+    // load_from_env_or_path falls back to valid fallback path when env is unset (&PathBuf and &str)
     let lib =
         GnaLibrary::load_from_env_or_path("TOTALLY_UNSET_ENV_FOR_OR_PATH", &compiled_dll).unwrap();
     assert_eq!(lib.path(), compiled_dll.as_path());
     drop(lib);
+
+    let compiled_str = compiled_dll.to_str().unwrap();
+    let lib =
+        GnaLibrary::load_from_env_or_path("TOTALLY_UNSET_ENV_FOR_OR_PATH", compiled_str).unwrap();
+    assert_eq!(lib.path(), compiled_dll.as_path());
+    drop(lib);
+
+    // load_from_env_or_path (&str, &str) exercises load_from_path::<&str> error branches
+    let incomplete_str = incomplete_dll.to_str().unwrap();
+    match GnaLibrary::load_from_env_or_path("TOTALLY_UNSET_ENV_FOR_OR_PATH", incomplete_str)
+        .unwrap_err()
+    {
+        GnaError::SymbolNotFound { symbol, .. } => assert_eq!(symbol, "Gna2MemoryFree"),
+        other => panic!("Expected SymbolNotFound, got: {:?}", other),
+    }
+
+    match GnaLibrary::load_from_env_or_path(
+        "TOTALLY_UNSET_ENV_FOR_OR_PATH",
+        "nonexistent_fallback.dll",
+    )
+    .unwrap_err()
+    {
+        GnaError::LibraryLoadError(_) => {}
+        other => panic!("Expected LibraryLoadError, got: {:?}", other),
+    }
 }
 
 #[test]
@@ -634,10 +676,20 @@ fn test_builder_directory_and_env_candidates() {
     guard.set("TEST_BUILDER_OK_FILE", &compiled_dll);
     guard.set("TEST_BUILDER_OK_DIR", &env_dir_ok);
 
-    // Builder defaults/debug/clone smoke check
+    // Builder defaults/debug/clone smoke check (empty and populated with DirectPath + EnvVar)
     let default_builder = GnaLibraryBuilder::default();
     let _cloned_builder = default_builder.clone();
     assert!(format!("{:?}", default_builder).contains("GnaLibraryBuilder"));
+
+    let populated_builder = GnaLibraryBuilder::default()
+        .path(&dir_empty)
+        .env("TEST_BUILDER_OK_FILE")
+        .system_fallback(true);
+    let cloned_populated = populated_builder.clone();
+    let dbg_populated = format!("{:?}", cloned_populated);
+    assert!(dbg_populated.contains("DirectPath"));
+    assert!(dbg_populated.contains("EnvVar"));
+    assert!(dbg_populated.contains("system_fallback: true"));
 
     // All failing path & env candidates -> LibrarySearchFailed with tried paths and last_error
     let err = GnaLibrary::builder()

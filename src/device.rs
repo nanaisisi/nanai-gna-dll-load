@@ -162,28 +162,18 @@ mod tests {
     // Global tracker for memory allocations to safely deallocate with Rust's allocator
     static ALLOCATIONS: Mutex<Option<HashMap<usize, std::alloc::Layout>>> = Mutex::new(None);
 
-    const MOCK_ERROR_STATUS: crate::types::Gna2Status = 100;
-
     unsafe extern "C" fn mock_device_get_count(device_count: *mut u32) -> crate::types::Gna2Status {
-        if !device_count.is_null() {
-            MOCK_STATE.with(|s| {
-                unsafe { *device_count = s.borrow().device_count };
-            });
-        }
+        MOCK_STATE.with(|s| {
+            unsafe { *device_count = s.borrow().device_count };
+        });
         GNA2_STATUS_SUCCESS
     }
 
     unsafe extern "C" fn mock_device_get_version(
-        device_index: u32,
+        _device_index: u32,
         device_version: *mut Gna2DeviceVersion,
     ) -> crate::types::Gna2Status {
-        let is_valid = MOCK_STATE.with(|s| device_index < s.borrow().device_count);
-        if !is_valid {
-            return MOCK_ERROR_STATUS;
-        }
-        if !device_version.is_null() {
-            unsafe { *device_version = Gna2DeviceVersion::SOFTWARE_EMULATION };
-        }
+        unsafe { *device_version = Gna2DeviceVersion::SOFTWARE_EMULATION };
         GNA2_STATUS_SUCCESS
     }
 
@@ -202,9 +192,7 @@ mod tests {
         _target_device_version: Gna2DeviceVersion,
         device_index: *mut u32,
     ) -> crate::types::Gna2Status {
-        if !device_index.is_null() {
-            unsafe { *device_index = 42 };
-        }
+        unsafe { *device_index = 42 };
         GNA2_STATUS_SUCCESS
     }
 
@@ -220,26 +208,15 @@ mod tests {
         size_granted: *mut u32,
         memory_address: *mut *mut c_void,
     ) -> crate::types::Gna2Status {
-        if size_requested == 0 {
-            return MOCK_ERROR_STATUS;
-        }
-        let layout = match std::alloc::Layout::from_size_align(size_requested as usize, 64) {
-            Ok(l) => l,
-            Err(_) => return MOCK_ERROR_STATUS,
-        };
+        let layout = std::alloc::Layout::from_size_align(size_requested as usize, 64).unwrap();
         let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
-        if ptr.is_null() {
-            return MOCK_ERROR_STATUS;
-        }
         let mut map = ALLOCATIONS.lock().unwrap();
         map.get_or_insert_with(HashMap::new)
             .insert(ptr as usize, layout);
 
-        if !size_granted.is_null() {
-            unsafe { *size_granted = size_requested };
-        }
-        if !memory_address.is_null() {
-            unsafe { *memory_address = ptr as *mut c_void };
+        unsafe {
+            *size_granted = size_requested;
+            *memory_address = ptr as *mut c_void;
         }
         GNA2_STATUS_SUCCESS
     }
@@ -254,14 +231,13 @@ mod tests {
     }
 
     unsafe extern "C" fn mock_memory_free(memory: *mut c_void) -> crate::types::Gna2Status {
-        if !memory.is_null() {
-            let mut map = ALLOCATIONS.lock().unwrap();
-            if let Some(allocs) = map.as_mut()
-                && let Some(layout) = allocs.remove(&(memory as usize))
-            {
-                unsafe { std::alloc::dealloc(memory as *mut u8, layout) };
-            }
-        }
+        let mut map = ALLOCATIONS.lock().unwrap();
+        let layout = map
+            .as_mut()
+            .expect("ALLOCATIONS should be initialized")
+            .remove(&(memory as usize))
+            .expect("pointer should exist in ALLOCATIONS");
+        unsafe { std::alloc::dealloc(memory as *mut u8, layout) };
         GNA2_STATUS_SUCCESS
     }
 

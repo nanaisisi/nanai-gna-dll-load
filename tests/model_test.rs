@@ -88,6 +88,7 @@ struct MockModelState {
     observed_operand_counts: Vec<u32>,
     observed_first_layer_tensor_modes: Vec<Gna2TensorMode>,
     free_fallback_fca_operands: bool,
+    freed_fallback_fca_operands_calls: u32,
     raw_operand_ptrs: Vec<usize>,
     heap_allocated_ptrs: Vec<usize>,
 
@@ -123,6 +124,7 @@ impl Default for MockModelState {
             observed_operand_counts: Vec::new(),
             observed_first_layer_tensor_modes: Vec::new(),
             free_fallback_fca_operands: false,
+            freed_fallback_fca_operands_calls: 0,
             raw_operand_ptrs: Vec::new(),
             heap_allocated_ptrs: Vec::new(),
             model_release_calls: 0,
@@ -316,6 +318,7 @@ unsafe extern "C" fn mock_model_create(
                         && op.operation_type == Gna2OperationType::FullyConnectedAffine
                         && !state.raw_operand_ptrs.contains(&addr)
                     {
+                        state.freed_fallback_fca_operands_calls += 1;
                         ptrs_to_free.push(addr);
                     }
                 }
@@ -611,6 +614,17 @@ fn test_model_build_manual_fca_fallback_and_raw_operations() {
             ]
         );
         assert_eq!(state.observed_operand_counts, vec![5, 2, 0]);
+        assert_eq!(
+            state.observed_first_layer_tensor_modes,
+            vec![
+                Gna2TensorMode::Default,
+                Gna2TensorMode::Default,
+                Gna2TensorMode::Default,
+                Gna2TensorMode::Default,
+                Gna2TensorMode::Disabled,
+            ]
+        );
+        assert_eq!(state.freed_fallback_fca_operands_calls, 1);
     });
 }
 

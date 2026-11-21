@@ -589,7 +589,7 @@ fn test_load_tester_duration_boundary_and_zero_elapsed() {
             .with_iterations(0)
             .with_track_hw_usage(false),
     );
-    for _ in 0..2_000 {
+    for _ in 0..10_000 {
         let report = zero_tester.run(&mut req_cfg).unwrap();
         assert_eq!(report.completed_inferences, 0);
         assert_eq!(report.inferences_per_second, 0.0);
@@ -597,4 +597,81 @@ fn test_load_tester_duration_boundary_and_zero_elapsed() {
             break;
         }
     }
+}
+
+#[test]
+fn test_load_tester_drain_latency_below_max() {
+    reset_stress_state();
+    // Iter 1 enqueues #1 and #2 at t=0, waits #1 (~25ms < 60ms).
+    // Iter 2 enqueues #3 at t~25ms, waits #2 (~50ms -> finishes at t~75ms >= 60ms, latency_max ~75ms).
+    // Drain waits #3 immediately (lat ~50ms < latency_max ~75ms), hitting lat > latency_max == false.
+    MOCK_STRESS.with(|s| {
+        s.borrow_mut().wait_delays_ms = vec![(1, 25), (2, 50)];
+    });
+
+    let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
+    let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
+
+    let cfg = GnaLoadTestConfig {
+        iterations: None,
+        duration: Some(Duration::from_millis(60)),
+        concurrency: 2,
+        timeout_per_request_ms: 500,
+        track_hw_usage: true,
+    };
+    let report = GnaLoadTester::new(cfg).run(&mut req_cfg).unwrap();
+
+    assert_eq!(report.completed_inferences, 3);
+    assert_eq!(report.failed_inferences, 0);
+    assert_eq!(report.usage_monitor.inference_count(), 3);
+}
+
+#[test]
+fn test_load_tester_drain_track_hw_usage_false() {
+    reset_stress_state();
+    MOCK_STRESS.with(|s| {
+        s.borrow_mut().wait_delays_ms = vec![(1, 45)];
+    });
+
+    let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
+    let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
+
+    let cfg = GnaLoadTestConfig {
+        iterations: None,
+        duration: Some(Duration::from_millis(25)),
+        concurrency: 2,
+        timeout_per_request_ms: 500,
+        track_hw_usage: false,
+    };
+    let report = GnaLoadTester::new(cfg).run(&mut req_cfg).unwrap();
+
+    assert_eq!(report.completed_inferences, 2);
+    assert_eq!(report.failed_inferences, 0);
+    assert_eq!(report.usage_monitor.inference_count(), 0);
+}
+
+#[test]
+fn test_load_tester_drain_missing_instrumentation_stats_err() {
+    reset_stress_state();
+    MOCK_STRESS.with(|s| {
+        s.borrow_mut().wait_delays_ms = vec![(1, 45)];
+    });
+
+    let mut syms_no_inst = full_stress_symbols();
+    syms_no_inst.instrumentation_config_create = None;
+    let lib_no_inst = GnaLibrary::from_symbol_table(syms_no_inst);
+    let mut req_no_inst = GnaRequestConfig::create(&lib_no_inst, 1).unwrap();
+
+    let cfg = GnaLoadTestConfig {
+        iterations: None,
+        duration: Some(Duration::from_millis(25)),
+        concurrency: 2,
+        timeout_per_request_ms: 500,
+        track_hw_usage: true,
+    };
+    let report = GnaLoadTester::new(cfg).run(&mut req_no_inst).unwrap();
+
+    assert_eq!(report.completed_inferences, 2);
+    assert_eq!(report.failed_inferences, 0);
+    assert_eq!(report.usage_monitor.inference_count(), 0);
 }

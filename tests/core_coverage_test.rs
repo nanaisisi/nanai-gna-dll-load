@@ -609,6 +609,12 @@ fn test_device_get_version_error_branches() {
     reset_mock_state();
     let lib = full_mock_library();
 
+    // device_get_count returns non-success status (covers '?' error branch in get_version)
+    with_mock_state(|s| s.device_get_count_status = -9);
+    let err = GnaDevice::get_version(&lib, 0).unwrap_err();
+    assert!(matches!(err, GnaError::StatusError { status: -9, .. }));
+    with_mock_state(|s| s.device_get_count_status = GNA2_STATUS_SUCCESS);
+
     // count == 0 -> NoDevicesAvailable
     with_mock_state(|s| s.device_count = 0);
     let err = GnaDevice::get_version(&lib, 0).unwrap_err();
@@ -639,6 +645,12 @@ fn test_device_get_version_error_branches() {
 fn test_device_open_error_and_success_and_library_accessor() {
     reset_mock_state();
     let lib = full_mock_library();
+
+    // get_version fails -> open propagates error via '?'
+    with_mock_state(|s| s.device_count = 0);
+    let err = GnaDevice::open(&lib, 0).err().unwrap();
+    assert!(matches!(err, GnaError::NoDevicesAvailable));
+    with_mock_state(|s| s.device_count = 1);
 
     with_mock_state(|s| s.device_open_status = -10);
     let err = GnaDevice::open(&lib, 0).err().unwrap();

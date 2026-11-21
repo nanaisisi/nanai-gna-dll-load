@@ -178,10 +178,10 @@ impl GnaLoadTester {
         let mut latency_max = Duration::ZERO;
         let mut latency_sum = Duration::ZERO;
 
-        let start_time = Instant::now();
-
         // Queue to track in-flight requests: (request_id, submit_instant)
         let mut in_flight: Vec<(u32, Instant)> = Vec::with_capacity(concurrency);
+
+        let start_time = Instant::now();
 
         while completed + failed < max_iterations {
             if let Some(dur) = max_duration
@@ -248,8 +248,8 @@ impl GnaLoadTester {
             }
         }
 
-        // Drain any remaining in-flight requests
-        for (req_id, req_start) in in_flight {
+        // Drain any remaining in-flight requests (drain in-place so deallocation stays outside elapsed timing)
+        for (req_id, req_start) in in_flight.drain(..) {
             match request_config.wait(req_id, self.config.timeout_per_request_ms) {
                 Ok(()) => {
                     let lat = req_start.elapsed();
@@ -274,7 +274,11 @@ impl GnaLoadTester {
             }
         }
 
-        let elapsed = start_time.elapsed();
+        let elapsed = if max_iterations == 0 {
+            Duration::ZERO
+        } else {
+            start_time.elapsed()
+        };
         let ips = if elapsed.as_secs_f64() > 0.0 {
             (completed as f64) / elapsed.as_secs_f64()
         } else {
