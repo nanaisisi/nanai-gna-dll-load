@@ -528,3 +528,73 @@ fn test_load_tester_zero_iterations_and_errors() {
     assert_eq!(report_wait_err.completed_inferences, 2);
     assert_eq!(report_wait_err.failed_inferences, 1);
 }
+
+#[test]
+fn test_load_tester_drain_updates_latency_min_and_max() {
+    reset_stress_state();
+    MOCK_STRESS.with(|s| {
+        let mut st = s.borrow_mut();
+        st.wait_delays_ms = vec![(1, 25), (3, 10)];
+        st.fail_wait_on_call = Some(1);
+    });
+
+    let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
+    let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
+
+    let cfg = GnaLoadTestConfig {
+        iterations: None,
+        duration: Some(Duration::from_millis(15)),
+        concurrency: 3,
+        timeout_per_request_ms: 500,
+        track_hw_usage: true,
+    };
+    let report = GnaLoadTester::new(cfg).run(&mut req_cfg).unwrap();
+
+    assert_eq!(report.completed_inferences, 2);
+    assert_eq!(report.failed_inferences, 1);
+    assert!(report.latency_min > Duration::ZERO);
+    assert!(report.latency_min <= report.latency_max);
+    assert_eq!(report.usage_monitor.inference_count(), 2);
+}
+
+#[test]
+fn test_load_tester_duration_boundary_and_zero_elapsed() {
+    let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
+    let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
+
+    reset_stress_state();
+    let durations_ns: Vec<u64> = (100..=2_000)
+        .step_by(100)
+        .chain((2_500..=10_000).step_by(500))
+        .collect();
+    for _ in 0..25 {
+        for ns in &durations_ns {
+            let report = GnaLoadTester::new(GnaLoadTestConfig {
+                iterations: Some(1),
+                duration: Some(Duration::from_nanos(*ns)),
+                concurrency: 1,
+                timeout_per_request_ms: 100,
+                track_hw_usage: false,
+            })
+            .run(&mut req_cfg)
+            .unwrap();
+            assert!(report.completed_inferences <= 1);
+            assert_eq!(report.failed_inferences, 0);
+        }
+    }
+
+    reset_stress_state();
+    let zero_tester = GnaLoadTester::new(
+        GnaLoadTestConfig::new()
+            .with_iterations(0)
+            .with_track_hw_usage(false),
+    );
+    for _ in 0..2_000 {
+        let report = zero_tester.run(&mut req_cfg).unwrap();
+        assert_eq!(report.completed_inferences, 0);
+        assert_eq!(report.inferences_per_second, 0.0);
+        if report.elapsed_time.is_zero() {
+            break;
+        }
+    }
+}

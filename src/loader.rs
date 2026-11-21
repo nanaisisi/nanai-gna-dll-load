@@ -41,13 +41,14 @@ impl GnaLibrary {
     /// - macOS: `"libgna.dylib"`
     /// - Linux / other Unix: `"libgna.so"`
     pub fn default_dll_name() -> &'static str {
-        if cfg!(target_os = "windows") {
-            "gna.dll"
-        } else if cfg!(target_os = "macos") {
-            "libgna.dylib"
-        } else {
-            "libgna.so"
-        }
+        #[cfg(target_os = "windows")]
+        const DLL_NAME: &str = "gna.dll";
+        #[cfg(target_os = "macos")]
+        const DLL_NAME: &str = "libgna.dylib";
+        #[cfg(not(any(target_os = "windows", target_os = "macos")))]
+        const DLL_NAME: &str = "libgna.so";
+
+        DLL_NAME
     }
 
     /// Create a new builder to configure search paths, environment variables, and fallback rules.
@@ -58,8 +59,8 @@ impl GnaLibrary {
     /// Attempt to load the GNA dynamic library from an explicit file path.
     pub fn load_from_path<P: AsRef<Path>>(path: P) -> Result<Self> {
         let path_ref = path.as_ref();
-        let lib =
-            unsafe { libloading::Library::new(path_ref) }.map_err(GnaError::LibraryLoadError)?;
+        let lib_res = unsafe { libloading::Library::new(path_ref) };
+        let lib = lib_res.map_err(GnaError::LibraryLoadError)?;
 
         let symbols = GnaSymbolTable::load(&lib)?;
 

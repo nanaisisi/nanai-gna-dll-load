@@ -6,7 +6,7 @@ use crate::error::{GnaError, Result};
 use crate::loader::GnaLibrary;
 use crate::types::{
     GNA2_STATUS_MODEL_ERROR_UNAVAILABLE, GNA2_STATUS_SUCCESS, Gna2Model, Gna2ModelError,
-    Gna2Operation, Gna2OperationType, Gna2Tensor,
+    Gna2Operation, Gna2OperationType, Gna2Tensor, Gna2UserAllocator,
 };
 
 #[link(name = "kernel32")]
@@ -112,6 +112,26 @@ enum LayerDefinition {
     Raw(Gna2Operation),
 }
 
+/// Allocate and populate the 5-operand pointer table for a fully connected affine layer.
+unsafe fn allocate_fca_operands(
+    allocator: Gna2UserAllocator,
+    fca: &FullyConnectedAffineLayer,
+) -> Result<*mut *const Gna2Tensor> {
+    let size = (5 * std::mem::size_of::<*const Gna2Tensor>()) as u32;
+    let mem = unsafe { allocator(size) } as *mut *const Gna2Tensor;
+    if mem.is_null() {
+        return Err(GnaError::NullPointer);
+    }
+    unsafe {
+        *mem.add(0) = &fca.input as *const Gna2Tensor;
+        *mem.add(1) = &fca.output as *const Gna2Tensor;
+        *mem.add(2) = &fca.weights as *const Gna2Tensor;
+        *mem.add(3) = &fca.biases as *const Gna2Tensor;
+        *mem.add(4) = &fca.activation as *const Gna2Tensor;
+    }
+    Ok(mem)
+}
+
 /// Fluent builder for constructing and compiling a GNA Model on a given device.
 pub struct GnaModelBuilder {
     layers: Vec<LayerDefinition>,
@@ -200,21 +220,8 @@ impl GnaModelBuilder {
                         // Manual operation initialization if helper symbol not present
                         op.operation_type = Gna2OperationType::FullyConnectedAffine;
                         // Allocate operands pointer table (5 operands: input, output, weights, biases, activation)
-                        let operands_buf = unsafe {
-                            let mem = rust_gna2_user_allocator(
-                                (5 * std::mem::size_of::<*const Gna2Tensor>()) as u32,
-                            ) as *mut *const Gna2Tensor;
-                            if mem.is_null() {
-                                return Err(GnaError::NullPointer);
-                            }
-                            *mem.add(0) = &fca.input as *const Gna2Tensor;
-                            *mem.add(1) = &fca.output as *const Gna2Tensor;
-                            *mem.add(2) = &fca.weights as *const Gna2Tensor;
-                            *mem.add(3) = &fca.biases as *const Gna2Tensor;
-                            *mem.add(4) = &fca.activation as *const Gna2Tensor;
-                            mem
-                        };
-                        op.operands = operands_buf;
+                        let buf = unsafe { allocate_fca_operands(rust_gna2_user_allocator, fca) }?;
+                        op.operands = buf;
                         op.number_of_operands = 5;
                         op.parameters = ptr::null_mut();
                         op.number_of_parameters = 0;
@@ -301,5 +308,27 @@ impl GnaModelBuilder {
 impl Default for GnaModelBuilder {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    unsafe extern "C" fn null_allocator(_size: u32) -> *mut c_void {
+        ptr::null_mut()
+    }
+
+    #[test]
+    fn test_allocate_fca_operands_null_allocator_returns_err() {
+        let fca = FullyConnectedAffineLayer {
+            input: Gna2Tensor::disabled(),
+            output: Gna2Tensor::disabled(),
+            weights: Gna2Tensor::disabled(),
+            biases: Gna2Tensor::disabled(),
+            activation: Gna2Tensor::disabled(),
+        };
+        let err = unsafe { allocate_fca_operands(null_allocator, &fca) }.unwrap_err();
+        assert!(matches!(err, GnaError::NullPointer));
     }
 }
