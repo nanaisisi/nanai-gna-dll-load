@@ -144,4 +144,33 @@ mod tests {
             "Singleton state must correctly accumulate."
         );
     }
+
+    #[test]
+    fn test_metric_default_and_traits() {
+        use nanai_gna_dll_load::metrics::metric::Metric;
+
+        let metric = Metric::default();
+        assert_eq!(metric.count, 0);
+        assert_eq!(metric.sum_of_values, 0.0);
+        assert_eq!(metric.value, 0.0);
+
+        let cloned = metric.clone();
+        assert_eq!(cloned.count, 0);
+        assert!(!format!("{cloned:?}").is_empty());
+    }
+
+    #[test]
+    fn test_metric_store_default_and_get_or_init_existing() {
+        let store = MetricStore::default();
+        assert!(store.get_all_metrics().is_empty());
+        assert!(store.get_metric("missing").is_none());
+
+        let avg = store.record("cpu_usage", 42.5);
+        assert!((avg - 42.5).abs() < 1e-9);
+
+        let existing = store.get_or_init("cpu_usage");
+        assert_eq!(existing.count, 1);
+        assert!((existing.sum_of_values - 42.5).abs() < 1e-9);
+        assert!((existing.value - 42.5).abs() < 1e-9);
+    }
 }
