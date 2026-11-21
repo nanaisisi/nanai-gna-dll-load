@@ -12,7 +12,7 @@ path = "src/lib.rs"
 
 [dependencies]
 libloading = "0.9.1"
-jiff = { version = "1.0.1", features = ["serde", "tz-system"] }
+jiff = { version = "1.0.2", features = ["serde", "tz-system"] }
 thiserror = "2.0.21"
 
 [dev-dependencies]

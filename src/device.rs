@@ -153,10 +153,10 @@ mod tests {
     }
 
     thread_local! {
-        static MOCK_STATE: RefCell<MockState> = RefCell::new(MockState {
+        static MOCK_STATE: RefCell<MockState> = const { RefCell::new(MockState {
             device_count: 1,
             close_call_count: 0,
-        });
+        }) };
     }
 
     // Global tracker for memory allocations to safely deallocate with Rust's allocator
@@ -256,10 +256,10 @@ mod tests {
     unsafe extern "C" fn mock_memory_free(memory: *mut c_void) -> crate::types::Gna2Status {
         if !memory.is_null() {
             let mut map = ALLOCATIONS.lock().unwrap();
-            if let Some(allocs) = map.as_mut() {
-                if let Some(layout) = allocs.remove(&(memory as usize)) {
-                    unsafe { std::alloc::dealloc(memory as *mut u8, layout) };
-                }
+            if let Some(allocs) = map.as_mut()
+                && let Some(layout) = allocs.remove(&(memory as usize))
+            {
+                unsafe { std::alloc::dealloc(memory as *mut u8, layout) };
             }
         }
         GNA2_STATUS_SUCCESS
