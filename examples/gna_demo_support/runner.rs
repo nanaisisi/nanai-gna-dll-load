@@ -2,6 +2,7 @@ use std::time::{Duration, Instant};
 
 use nanai_gna_dll_load::{
     device::GnaDevice,
+    gna_allocated_bytes,
     inference::GnaRequestConfig,
     is_gna_uncontended,
     model::GnaModelBuilder,
@@ -77,6 +78,7 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
             Ok(report) => report.print_summary(),
             Err(error) => eprintln!("Stress test failed: {error}"),
         }
+        println!("GNA allocated memory: {} bytes", gna_allocated_bytes());
         return;
     }
 
@@ -109,4 +111,5 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
         Ok(uncontended) => println!("GNA uncontended (no external processes): {uncontended}"),
         Err(error) => println!("GNA contention check failed: {error}"),
     }
+    println!("GNA allocated memory: {} bytes", gna_allocated_bytes());
 }

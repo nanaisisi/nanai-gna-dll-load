@@ -2,6 +2,14 @@ use std::ffi::c_void;
 use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 use std::slice;
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+static GNA_ALLOCATED_BYTES: AtomicUsize = AtomicUsize::new(0);
+
+/// Returns the total number of bytes currently allocated via `GnaBuffer`.
+pub fn gna_allocated_bytes() -> usize {
+    GNA_ALLOCATED_BYTES.load(Ordering::Relaxed)
+}
 
 use crate::Result;
 use crate::error::GnaError;
@@ -33,11 +41,13 @@ impl GnaBuffer {
         }
 
         let ptr = NonNull::new(raw_ptr as *mut u8).ok_or(GnaError::NullPointer)?;
+        let size_granted = granted as usize;
+        GNA_ALLOCATED_BYTES.fetch_add(size_granted, Ordering::Relaxed);
 
         Ok(Self {
             library: library.clone(),
             ptr,
-            size_granted: granted as usize,
+            size_granted,
         })
     }
 
@@ -136,6 +146,7 @@ impl DerefMut for GnaBuffer {
 
 impl Drop for GnaBuffer {
     fn drop(&mut self) {
+        GNA_ALLOCATED_BYTES.fetch_sub(self.size_granted, Ordering::Relaxed);
         unsafe {
             let _ = (self.library.symbols().memory_free())(self.as_raw_ptr());
         }

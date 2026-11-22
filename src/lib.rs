@@ -20,7 +20,7 @@ pub use instrumentation::{
     GnaDeviceProfile, GnaInstrumentationConfig, GnaPerformanceStats, GnaUsageMonitor,
 };
 pub use loader::{GnaLibrary, GnaLibraryBuilder};
-pub use memory::GnaBuffer;
+pub use memory::{GnaBuffer, gna_allocated_bytes};
 pub use model::{GnaModel, GnaModelBuilder};
 pub use model_export::GnaModelExportConfig;
 pub use process::{
