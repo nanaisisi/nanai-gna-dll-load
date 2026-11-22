@@ -97,6 +97,21 @@ pub fn is_gna_uncontended() -> Result<bool> {
     Ok(!active.iter().any(|p| p.pid != current_pid))
 }
 
+/// Publish the current process's `gna_allocated_bytes()` to a per-PID status file
+/// in the system temporary directory so external monitors can read it.
+pub fn publish_self_gna_allocated_bytes() -> Result<()> {
+    let path = std::env::temp_dir().join(format!("nanai-gna-mem-{}.txt", std::process::id()));
+    let bytes = crate::memory::gna_allocated_bytes();
+    std::fs::write(path, bytes.to_string())
+        .map_err(|e| crate::error::GnaError::Other(e.to_string()))
+}
+
+/// Read the published GNA allocated bytes for `pid` if available.
+pub fn read_process_gna_allocated_bytes(pid: u32) -> Option<usize> {
+    let path = std::env::temp_dir().join(format!("nanai-gna-mem-{pid}.txt"));
+    std::fs::read_to_string(path).ok()?.trim().parse().ok()
+}
+
 /// Query a Windows PDH performance counter as `f64` (returns `Ok(None)` if the counter
 /// does not exist or on non-Windows platforms).
 pub fn query_pdh_counter_double(counter_path: &str) -> Result<Option<f64>> {
@@ -457,6 +472,13 @@ mod tests {
         let res = query_pdh_counter_double("\\Memory\\Available Bytes").unwrap();
         assert!(res.is_some());
         assert!(res.unwrap() > 0.0);
+    }
+
+    #[test]
+    fn test_publish_and_read_process_gna_allocated_bytes() {
+        publish_self_gna_allocated_bytes().unwrap();
+        let read_back = read_process_gna_allocated_bytes(std::process::id());
+        assert!(read_back.is_some());
     }
 
     #[test]
