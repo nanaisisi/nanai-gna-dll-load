@@ -2,15 +2,15 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct GnaPerformanceStats {
     /// Total hardware execution cycles.
-    pub(crate) total_cycles: u64,
+    total_cycles: u64,
     /// Hardware stall cycles (memory waits, DMA wait, etc.).
-    pub(crate) stall_cycles: u64,
+    stall_cycles: u64,
     /// Active (non-stalled) hardware execution cycles (`total_cycles - stall_cycles`).
-    pub(crate) active_cycles: u64,
+    active_cycles: u64,
     /// Hardware utilization ratio in range `[0.0, 1.0]` (`active_cycles / total_cycles`).
-    pub(crate) hw_usage_ratio: f64,
+    hw_usage_ratio: f64,
     /// Execution time in configured unit (e.g. microseconds) if `LibExecution` was recorded.
-    pub(crate) execution_time: Option<u64>,
+    execution_time: Option<u64>,
 }
 
 impl GnaPerformanceStats {

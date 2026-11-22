@@ -62,10 +62,17 @@ impl GnaModelBuilder {
         if status != GNA2_STATUS_SUCCESS {
             let mut status_msg = None;
             if let Some(status_msg_fn) = library.symbols().status_get_message {
-                let mut sbuf = vec![0 as c_char; 256];
-                let s_res = unsafe { status_msg_fn(status, sbuf.as_mut_ptr(), 256) };
+                let max_len = library
+                    .symbols()
+                    .status_get_max_message_length
+                    .map(|f| unsafe { f() })
+                    .unwrap_or(256)
+                    .max(256);
+                let mut sbuf = vec![0 as c_char; max_len as usize];
+                let s_res = unsafe { status_msg_fn(status, sbuf.as_mut_ptr(), max_len) };
                 if s_res == GNA2_STATUS_SUCCESS {
-                    sbuf[255] = 0;
+                    let last = sbuf.len() - 1;
+                    sbuf[last] = 0;
                     let c_str = unsafe { std::ffi::CStr::from_ptr(sbuf.as_ptr()) };
                     status_msg = Some(c_str.to_string_lossy().into_owned());
                 }

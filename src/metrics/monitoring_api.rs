@@ -3,7 +3,7 @@ use crate::metrics::metric_store::MetricStore;
 use std::sync::OnceLock;
 
 pub struct MonitoringApi {
-    pub(crate) store: MetricStore,
+    store: MetricStore,
 }
 
 impl MonitoringApi {

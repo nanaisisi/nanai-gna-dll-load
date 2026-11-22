@@ -63,7 +63,7 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
         Ok(request) => request,
         Err(error) => return eprintln!("Failed to create request config: {error}"),
     };
-    if let Err(error) = unsafe { request.set_operand_buffer(0, 0, inputs_ptr as _) } {
+    if let Err(error) = request.set_operand_gna_buffer(0, 0, &memory) {
         return eprintln!("Failed to set input buffer: {error}");
     }
     if let Err(error) = unsafe { request.set_operand_buffer(0, 1, outputs_ptr as _) } {

@@ -117,6 +117,10 @@ unsafe extern "C" fn mock_status_get_message(
     GNA2_STATUS_SUCCESS
 }
 
+unsafe extern "C" fn mock_status_get_max_message_length() -> u32 {
+    256
+}
+
 pub(super) fn full_mock_symbol_table() -> GnaSymbolTable {
     GnaSymbolTable::from_required(
         mock_device_get_count,
@@ -133,6 +137,7 @@ pub(super) fn full_mock_symbol_table() -> GnaSymbolTable {
     .with_model_error_get_max_message_length(mock_model_error_get_max_message_length)
     .with_operation_init_fully_connected_affine(mock_operation_init_fully_connected_affine)
     .with_status_get_message(mock_status_get_message)
+    .with_status_get_max_message_length(mock_status_get_max_message_length)
 }
 
 pub(super) fn sample_tensors(
