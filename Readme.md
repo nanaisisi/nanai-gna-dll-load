@@ -25,7 +25,7 @@ RustでIntel GNA (Gaussian & Neural Accelerator) のランタイムDLL/共有ラ
 ### 1. 任意のファイルパスからロード
 
 ```rust
-use nanai_gna_dll_rs::GnaLibrary;
+use nanai_gna_dll_load::GnaLibrary;
 
 let lib = GnaLibrary::load_from_path("C:/path/to/gna.dll")?;
 ```
@@ -35,7 +35,7 @@ let lib = GnaLibrary::load_from_path("C:/path/to/gna.dll")?;
 指定した環境変数にDLLのファイルパス、またはDLLが配置されているディレクトリパスを設定してロードできます（ディレクトリの場合は `gna.dll` / `libgna.so` が自動補完されます）。
 
 ```rust
-use nanai_gna_dll_rs::GnaLibrary;
+use nanai_gna_dll_load::GnaLibrary;
 
 let lib = GnaLibrary::load_from_env("CUSTOM_GNA_LIB_PATH")?;
 ```
@@ -43,7 +43,7 @@ let lib = GnaLibrary::load_from_env("CUSTOM_GNA_LIB_PATH")?;
 ### 3. 環境変数またはフォールバックパス
 
 ```rust
-use nanai_gna_dll_rs::GnaLibrary;
+use nanai_gna_dll_load::GnaLibrary;
 
 let lib = GnaLibrary::load_from_env_or_path("CUSTOM_GNA_LIB_PATH", "fallback/gna.dll")?;
 ```
@@ -51,7 +51,7 @@ let lib = GnaLibrary::load_from_env_or_path("CUSTOM_GNA_LIB_PATH", "fallback/gna
 ### 4. ビルダーによる優先度付き探索
 
 ```rust
-use nanai_gna_dll_rs::GnaLibrary;
+use nanai_gna_dll_load::GnaLibrary;
 
 let lib = GnaLibrary::builder()
     .path("explicit/path/to/gna.dll")      // 1. 指定パス
@@ -65,7 +65,7 @@ let lib = GnaLibrary::builder()
 ### 5. デフォルト検索ルールでのロード
 
 ```rust
-use nanai_gna_dll_rs::GnaLibrary;
+use nanai_gna_dll_load::GnaLibrary;
 
 // GNA_LIB_PATH -> GNA_LIB_DIR -> カレントディレクトリ -> システムパス の順で探索
 let lib = GnaLibrary::load_default()?;
@@ -76,7 +76,7 @@ let lib = GnaLibrary::load_default()?;
 OpenVINO 等の外部フレームワークを使わず、Rust のみで直接 GNA ネットワークを定義して実行できます。
 
 ```rust
-use nanai_gna_dll_rs::{
+use nanai_gna_dll_load::{
     GnaDevice, GnaLibrary, GnaModelBuilder, Gna2Tensor, Gna2DataType,
     GnaRequestConfig, Gna2AccelerationMode
 };
@@ -113,7 +113,7 @@ let usage = config.get_hw_usage()?;
 println!("Hardware usage: {:.2}%", usage * 100.0);
 
 let stats = config.get_performance_stats()?;
-println!("Total: {} cycles, Stall: {} cycles", stats.total_cycles, stats.stall_cycles);
+println!("Total: {} cycles, Stall: {} cycles", stats.total_cycles(), stats.stall_cycles());
 ```
 
 ### 7. 継続的な使用率モニタリング (`GnaUsageMonitor`)
@@ -121,7 +121,7 @@ println!("Total: {} cycles, Stall: {} cycles", stats.total_cycles, stats.stall_c
 複数回の推論リクエストにわたるハードウェア使用率の移動・累積統計（総稼働サイクル、ストールサイクル、加重平均稼働率）を追跡できます。
 
 ```rust
-use nanai_gna_dll_rs::GnaUsageMonitor;
+use nanai_gna_dll_load::GnaUsageMonitor;
 
 let mut monitor = GnaUsageMonitor::new();
 
@@ -145,7 +145,7 @@ println!("累積平均使用率: {:.2}%", monitor.cumulative_hw_usage_percentage
 
 ```rust
 use std::time::Duration;
-use nanai_gna_dll_rs::{GnaLoadTester, GnaLoadTestConfig};
+use nanai_gna_dll_load::{GnaLoadTester, GnaLoadTestConfig};
 
 let config = GnaLoadTestConfig::new()
     .with_iterations(1000)       // 1000回連続実行 (または .with_duration(Duration::from_secs(5)))
