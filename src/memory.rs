@@ -51,7 +51,7 @@ impl GnaBuffer {
         let mut raw_ptr: *mut c_void = std::ptr::null_mut();
 
         let status =
-            unsafe { (library.symbols().memory_alloc)(size as u32, &mut granted, &mut raw_ptr) };
+            unsafe { (library.symbols().memory_alloc())(size as u32, &mut granted, &mut raw_ptr) };
 
         Self::from_raw_alloc(library, status, raw_ptr, granted)
     }
@@ -62,7 +62,7 @@ impl GnaBuffer {
             return Err(GnaError::InvalidBufferSize(0));
         }
 
-        let alloc_for_device = match library.symbols().memory_alloc_for_device {
+        let alloc_for_device = match library.symbols().memory_alloc_for_device() {
             Some(f) => f,
             None => return Self::new(library, size),
         };
@@ -81,7 +81,7 @@ impl GnaBuffer {
         let tag_fn = self
             .library
             .symbols()
-            .memory_set_tag
+            .memory_set_tag()
             .ok_or_else(|| GnaError::Other("memory_set_tag not supported".into()))?;
         let status = unsafe { tag_fn(self.as_raw_ptr(), tag) };
         if status != GNA2_STATUS_SUCCESS {
@@ -137,7 +137,7 @@ impl DerefMut for GnaBuffer {
 impl Drop for GnaBuffer {
     fn drop(&mut self) {
         unsafe {
-            let _ = (self.library.symbols().memory_free)(self.as_raw_ptr());
+            let _ = (self.library.symbols().memory_free())(self.as_raw_ptr());
         }
     }
 }

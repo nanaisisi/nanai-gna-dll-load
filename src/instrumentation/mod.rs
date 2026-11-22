@@ -31,7 +31,7 @@ impl GnaInstrumentationConfig {
 
         let create_fn = library
             .symbols()
-            .instrumentation_config_create
+            .instrumentation_config_create()
             .ok_or_else(|| {
                 GnaError::Other("Gna2InstrumentationConfigCreate not supported".into())
             })?;
@@ -65,7 +65,7 @@ impl GnaInstrumentationConfig {
         let assign_fn = self
             .library
             .symbols()
-            .instrumentation_config_assign_to_request_config
+            .instrumentation_config_assign_to_request_config()
             .ok_or_else(|| {
                 GnaError::Other(
                     "Gna2InstrumentationConfigAssignToRequestConfig not supported".into(),
@@ -84,7 +84,7 @@ impl GnaInstrumentationConfig {
         let set_unit_fn = self
             .library
             .symbols()
-            .instrumentation_config_set_unit
+            .instrumentation_config_set_unit()
             .ok_or_else(|| {
                 GnaError::Other("Gna2InstrumentationConfigSetUnit not supported".into())
             })?;
@@ -101,7 +101,7 @@ impl GnaInstrumentationConfig {
         let set_mode_fn = self
             .library
             .symbols()
-            .instrumentation_config_set_mode
+            .instrumentation_config_set_mode()
             .ok_or_else(|| {
                 GnaError::Other("Gna2InstrumentationConfigSetMode not supported".into())
             })?;
@@ -184,7 +184,7 @@ impl GnaInstrumentationConfig {
 
 impl Drop for GnaInstrumentationConfig {
     fn drop(&mut self) {
-        if let Some(release_fn) = self.library.symbols().instrumentation_config_release {
+        if let Some(release_fn) = self.library.symbols().instrumentation_config_release() {
             unsafe {
                 let _ = release_fn(self.config_id);
             }

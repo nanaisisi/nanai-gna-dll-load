@@ -17,7 +17,7 @@ impl GnaDevice {
     /// Query the number of available GNA devices in the system.
     pub fn get_count(library: &GnaLibrary) -> Result<u32> {
         let mut count: u32 = 0;
-        let status = unsafe { (library.symbols().device_get_count)(&mut count) };
+        let status = unsafe { (library.symbols().device_get_count())(&mut count) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }
@@ -35,7 +35,8 @@ impl GnaDevice {
         }
 
         let mut version = Gna2DeviceVersion::default();
-        let status = unsafe { (library.symbols().device_get_version)(device_index, &mut version) };
+        let status =
+            unsafe { (library.symbols().device_get_version())(device_index, &mut version) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }
@@ -46,7 +47,7 @@ impl GnaDevice {
     pub fn open(library: &GnaLibrary, device_index: u32) -> Result<Self> {
         let version = Self::get_version(library, device_index)?;
 
-        let status = unsafe { (library.symbols().device_open)(device_index) };
+        let status = unsafe { (library.symbols().device_open())(device_index) };
         if status != GNA2_STATUS_SUCCESS {
             return Err(GnaError::from_status(status));
         }
@@ -70,7 +71,7 @@ impl GnaDevice {
     ) -> Result<Self> {
         let create_fn = library
             .symbols()
-            .device_create_for_export
+            .device_create_for_export()
             .ok_or_else(|| GnaError::Other("Gna2DeviceCreateForExport is not supported".into()))?;
 
         let mut device_index: u32 = 0;
@@ -91,7 +92,7 @@ impl GnaDevice {
         let set_threads_fn = self
             .library
             .symbols()
-            .device_set_number_of_threads
+            .device_set_number_of_threads()
             .ok_or_else(|| {
                 GnaError::Other("Gna2DeviceSetNumberOfThreads is not supported".into())
             })?;
@@ -127,7 +128,7 @@ impl GnaDevice {
 impl Drop for GnaDevice {
     fn drop(&mut self) {
         unsafe {
-            let _ = (self.library.symbols().device_close)(self.index);
+            let _ = (self.library.symbols().device_close())(self.index);
         }
     }
 }

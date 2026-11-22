@@ -20,7 +20,7 @@ impl GnaRequestConfig {
     pub fn create(library: &GnaLibrary, model_id: u32) -> Result<Self> {
         let create_fn = library
             .symbols()
-            .request_config_create
+            .request_config_create()
             .ok_or_else(|| GnaError::Other("Gna2RequestConfigCreate not supported".into()))?;
 
         let mut config_id: u32 = 0;
@@ -50,7 +50,7 @@ impl GnaRequestConfig {
         let set_buffer_fn = self
             .library
             .symbols()
-            .request_config_set_operand_buffer
+            .request_config_set_operand_buffer()
             .ok_or_else(|| {
                 GnaError::Other("Gna2RequestConfigSetOperandBuffer not supported".into())
             })?;
@@ -78,7 +78,7 @@ impl GnaRequestConfig {
         let enable_list_fn = self
             .library
             .symbols()
-            .request_config_enable_active_list
+            .request_config_enable_active_list()
             .ok_or_else(|| {
                 GnaError::Other("Gna2RequestConfigEnableActiveList not supported".into())
             })?;
@@ -105,7 +105,7 @@ impl GnaRequestConfig {
         let consistency_fn = self
             .library
             .symbols()
-            .request_config_enable_hardware_consistency
+            .request_config_enable_hardware_consistency()
             .ok_or_else(|| {
                 GnaError::Other("Gna2RequestConfigEnableHardwareConsistency not supported".into())
             })?;
@@ -122,7 +122,7 @@ impl GnaRequestConfig {
         let set_mode_fn = self
             .library
             .symbols()
-            .request_config_set_acceleration_mode
+            .request_config_set_acceleration_mode()
             .ok_or_else(|| {
                 GnaError::Other("Gna2RequestConfigSetAccelerationMode not supported".into())
             })?;
@@ -139,7 +139,7 @@ impl GnaRequestConfig {
         let enqueue_fn = self
             .library
             .symbols()
-            .request_enqueue
+            .request_enqueue()
             .ok_or_else(|| GnaError::Other("Gna2RequestEnqueue not supported".into()))?;
 
         let mut request_id: u32 = 0;
@@ -155,7 +155,7 @@ impl GnaRequestConfig {
         let wait_fn = self
             .library
             .symbols()
-            .request_wait
+            .request_wait()
             .ok_or_else(|| GnaError::Other("Gna2RequestWait not supported".into()))?;
 
         let status = unsafe { wait_fn(request_id, timeout_ms) };
@@ -228,7 +228,7 @@ impl GnaRequestConfig {
 
 impl Drop for GnaRequestConfig {
     fn drop(&mut self) {
-        if let Some(release_fn) = self.library.symbols().request_config_release {
+        if let Some(release_fn) = self.library.symbols().request_config_release() {
             unsafe {
                 let _ = release_fn(self.config_id);
             }

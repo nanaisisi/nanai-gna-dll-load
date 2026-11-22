@@ -89,11 +89,5 @@ pub(super) fn init_fca_manual(
 ) -> Result<Gna2Operation> {
     // Allocate operands pointer table (5 operands: input, output, weights, biases, activation)
     let buf = unsafe { allocate_fca_operands(allocator, fca) }?;
-    Ok(Gna2Operation {
-        operation_type: Gna2OperationType::FullyConnectedAffine,
-        operands: buf,
-        number_of_operands: 5,
-        parameters: ptr::null_mut(),
-        number_of_parameters: 0,
-    })
+    Ok(Gna2Operation::new(Gna2OperationType::FullyConnectedAffine).with_operands(buf, 5))
 }

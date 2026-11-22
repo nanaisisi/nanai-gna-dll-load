@@ -73,8 +73,8 @@ pub enum Gna2BiasMode {
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Gna2Shape {
-    pub(crate) number_of_dimensions: u32,
-    pub(crate) dimensions: [u32; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
+    number_of_dimensions: u32,
+    dimensions: [u32; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
 }
 
 impl Default for Gna2Shape {
@@ -136,11 +136,11 @@ impl Gna2Shape {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Gna2Tensor {
-    pub(crate) shape: Gna2Shape,
-    pub(crate) mode: Gna2TensorMode,
-    pub(crate) layout: [std::ffi::c_char; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
-    pub(crate) data_type: Gna2DataType,
-    pub(crate) data: *mut std::ffi::c_void,
+    shape: Gna2Shape,
+    mode: Gna2TensorMode,
+    layout: [std::ffi::c_char; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
+    data_type: Gna2DataType,
+    data: *mut std::ffi::c_void,
 }
 
 impl Default for Gna2Tensor {
@@ -210,11 +210,11 @@ impl Gna2Tensor {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Gna2Operation {
-    pub(crate) operation_type: Gna2OperationType,
-    pub(crate) operands: *const *const Gna2Tensor,
-    pub(crate) number_of_operands: u32,
-    pub(crate) parameters: *mut *mut std::ffi::c_void,
-    pub(crate) number_of_parameters: u32,
+    operation_type: Gna2OperationType,
+    operands: *const *const Gna2Tensor,
+    number_of_operands: u32,
+    parameters: *mut *mut std::ffi::c_void,
+    number_of_parameters: u32,
 }
 
 impl Default for Gna2Operation {
@@ -281,8 +281,8 @@ impl Gna2Operation {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Gna2Model {
-    pub(crate) number_of_operations: u32,
-    pub(crate) operations: *mut Gna2Operation,
+    number_of_operations: u32,
+    operations: *mut Gna2Operation,
 }
 
 impl Gna2Model {

@@ -145,7 +145,7 @@ impl GnaLibrary {
     pub fn get_library_version(&self) -> Result<String> {
         let version_fn = self
             .symbols()
-            .get_library_version
+            .get_library_version()
             .ok_or_else(|| GnaError::Other("Gna2GetLibraryVersion is not supported".into()))?;
 
         let mut buf = vec![0u8; 128];
@@ -165,7 +165,7 @@ impl GnaLibrary {
     pub fn override_alignment(&self, alignment: u32) -> Result<()> {
         let align_fn = self
             .symbols()
-            .model_override_alignment
+            .model_override_alignment()
             .ok_or_else(|| GnaError::Other("Gna2ModelOverrideAlignment is not supported".into()))?;
 
         let status = unsafe { align_fn(alignment) };

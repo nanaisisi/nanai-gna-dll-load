@@ -24,7 +24,7 @@ impl GnaModelBuilder {
         let library = device.library();
         let model_create = library
             .symbols()
-            .model_create
+            .model_create()
             .ok_or_else(|| GnaError::Other("Gna2ModelCreate is not supported by DLL".into()))?;
 
         if self.layers.is_empty() {
@@ -39,7 +39,7 @@ impl GnaModelBuilder {
         for layer in &mut self.layers {
             match layer {
                 LayerDefinition::FullyConnectedAffine(fca) => {
-                    let op_res = match library.symbols().operation_init_fully_connected_affine {
+                    let op_res = match library.symbols().operation_init_fully_connected_affine() {
                         Some(fca_init) => init_fca_via_symbol(fca_init, allocator, fca),
                         None => init_fca_manual(allocator, fca),
                     };
@@ -51,20 +51,17 @@ impl GnaModelBuilder {
             }
         }
 
-        let model_raw = Gna2Model {
-            number_of_operations: operations.len() as u32,
-            operations: operations.as_mut_ptr(),
-        };
+        let model_raw = Gna2Model::new(operations.len() as u32, operations.as_mut_ptr());
 
         let mut model_id: u32 = u32::MAX;
         let status = unsafe { model_create(device.index(), &model_raw, &mut model_id) };
 
         if status != GNA2_STATUS_SUCCESS {
             let mut status_msg = None;
-            if let Some(status_msg_fn) = library.symbols().status_get_message {
+            if let Some(status_msg_fn) = library.symbols().status_get_message() {
                 let max_len = library
                     .symbols()
-                    .status_get_max_message_length
+                    .status_get_max_message_length()
                     .map(|f| unsafe { f() })
                     .unwrap_or(256)
                     .max(256);

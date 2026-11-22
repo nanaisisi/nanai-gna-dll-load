@@ -54,9 +54,9 @@ unsafe extern "C" fn mock_model_create(
     model_id: *mut u32,
 ) -> Gna2Status {
     unsafe {
-        let op = &*(*model).operations;
+        let op = &*(*model).operations();
         std::alloc::dealloc(
-            op.operands as *mut u8,
+            op.operands() as *mut u8,
             std::alloc::Layout::new::<[*const Gna2Tensor; 5]>(),
         );
         *model_id = 1;
@@ -65,46 +65,15 @@ unsafe extern "C" fn mock_model_create(
 }
 
 fn mock_symbol_table() -> crate::symbol_table::GnaSymbolTable {
-    crate::symbol_table::GnaSymbolTable {
-        device_get_count: mock_device_get_count,
-        device_get_version: mock_device_get_version,
-        device_open: mock_device_open,
-        device_create_for_export: None,
-        device_close: mock_device_close,
-        device_set_number_of_threads: None,
-        get_library_version: None,
-        memory_alloc: mock_memory_alloc,
-        memory_alloc_for_device: None,
-        memory_free: mock_memory_free,
-        memory_set_tag: None,
-        model_create: Some(mock_model_create),
-        model_release: None,
-        model_get_last_error: None,
-        model_error_get_message: None,
-        model_error_get_max_message_length: None,
-        operation_init_fully_connected_affine: None,
-        request_config_create: None,
-        request_config_set_operand_buffer: None,
-        request_config_enable_active_list: None,
-        request_config_enable_hardware_consistency: None,
-        request_config_set_acceleration_mode: None,
-        request_config_release: None,
-        request_enqueue: None,
-        request_wait: None,
-        instrumentation_config_create: None,
-        instrumentation_config_assign_to_request_config: None,
-        instrumentation_config_set_unit: None,
-        instrumentation_config_set_mode: None,
-        instrumentation_config_release: None,
-        model_export_config_create: None,
-        model_export_config_release: None,
-        model_export_config_set_source: None,
-        model_export_config_set_target: None,
-        model_export: None,
-        model_override_alignment: None,
-        status_get_message: None,
-        status_get_max_message_length: None,
-    }
+    crate::symbol_table::GnaSymbolTable::from_required(
+        mock_device_get_count,
+        mock_device_get_version,
+        mock_device_open,
+        mock_device_close,
+        mock_memory_alloc,
+        mock_memory_free,
+    )
+    .with_model_create(mock_model_create)
 }
 
 #[test]
@@ -137,11 +106,11 @@ fn test_build_with_null_allocator_returns_err() {
         .expect("expected NullPointer error");
     assert_eq!(err.to_string(), GnaError::NullPointer.to_string());
     assert_eq!(
-        unsafe { (library.symbols().memory_alloc)(0, ptr::null_mut(), ptr::null_mut()) },
+        unsafe { (library.symbols().memory_alloc())(0, ptr::null_mut(), ptr::null_mut()) },
         -4
     );
     assert_eq!(
-        unsafe { (library.symbols().memory_free)(ptr::null_mut()) },
+        unsafe { (library.symbols().memory_free())(ptr::null_mut()) },
         GNA2_STATUS_SUCCESS
     );
 }

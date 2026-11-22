@@ -17,7 +17,7 @@ impl GnaModelExportConfig {
     pub fn create(library: &GnaLibrary, allocator: Gna2UserAllocator) -> Result<Self> {
         let create_fn = library
             .symbols()
-            .model_export_config_create
+            .model_export_config_create()
             .ok_or_else(|| {
                 GnaError::Other("Gna2ModelExportConfigCreate is not supported".into())
             })?;
@@ -39,7 +39,7 @@ impl GnaModelExportConfig {
         let set_source_fn = self
             .library
             .symbols()
-            .model_export_config_set_source
+            .model_export_config_set_source()
             .ok_or_else(|| {
                 GnaError::Other("Gna2ModelExportConfigSetSource is not supported".into())
             })?;
@@ -57,7 +57,7 @@ impl GnaModelExportConfig {
         let set_target_fn = self
             .library
             .symbols()
-            .model_export_config_set_target
+            .model_export_config_set_target()
             .ok_or_else(|| {
                 GnaError::Other("Gna2ModelExportConfigSetTarget is not supported".into())
             })?;
@@ -74,7 +74,7 @@ impl GnaModelExportConfig {
         let export_fn = self
             .library
             .symbols()
-            .model_export
+            .model_export()
             .ok_or_else(|| GnaError::Other("Gna2ModelExport is not supported".into()))?;
 
         let mut buffer: *mut c_void = std::ptr::null_mut();
@@ -95,7 +95,7 @@ impl GnaModelExportConfig {
 
 impl Drop for GnaModelExportConfig {
     fn drop(&mut self) {
-        if let Some(release_fn) = self.library.symbols().model_export_config_release {
+        if let Some(release_fn) = self.library.symbols().model_export_config_release() {
             unsafe {
                 let _ = release_fn(self.export_config_id);
             }

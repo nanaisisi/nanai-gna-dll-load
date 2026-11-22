@@ -41,11 +41,11 @@ impl GnaModel {
 
     /// Query the last model error from the library if model creation failed.
     pub fn get_last_error_message(library: &GnaLibrary) -> Option<String> {
-        let get_err = library.symbols().model_get_last_error?;
-        let get_msg = library.symbols().model_error_get_message?;
+        let get_err = library.symbols().model_get_last_error()?;
+        let get_msg = library.symbols().model_error_get_message()?;
         let max_len = library
             .symbols()
-            .model_error_get_max_message_length
+            .model_error_get_max_message_length()
             .map(|f| unsafe { f() })
             .unwrap_or(1024)
             .max(256);
@@ -76,7 +76,7 @@ impl GnaModel {
 
 impl Drop for GnaModel {
     fn drop(&mut self) {
-        if let Some(release_fn) = self.library.symbols().model_release {
+        if let Some(release_fn) = self.library.symbols().model_release() {
             unsafe {
                 let _ = release_fn(self.model_id);
             }
