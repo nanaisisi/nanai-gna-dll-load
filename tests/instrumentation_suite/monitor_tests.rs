@@ -79,9 +79,9 @@ fn test_device_profile_and_monitor_ratios() {
     use std::time::Duration;
 
     let profile = GnaDeviceProfile::new("GNA 3.0", 400_000_000).with_mac_units(32);
-    assert_eq!(profile.name, "GNA 3.0");
-    assert_eq!(profile.max_clock_hz, 400_000_000);
-    assert_eq!(profile.mac_units, Some(32));
+    assert_eq!(profile.name(), "GNA 3.0");
+    assert_eq!(profile.max_clock_hz(), 400_000_000);
+    assert_eq!(profile.mac_units(), Some(32));
 
     let zero_stats = GnaPerformanceStats::from_cycles(0, 0);
     assert_eq!(zero_stats.stall_ratio(), 0.0);

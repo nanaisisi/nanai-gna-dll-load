@@ -371,9 +371,31 @@ impl Gna2Model {
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct Gna2PwlSegment {
-    pub x_base: i32,
-    pub y_base: i16,
-    pub slope: i16,
+    x_base: i32,
+    y_base: i16,
+    slope: i16,
+}
+
+impl Gna2PwlSegment {
+    pub const fn new(x_base: i32, y_base: i16, slope: i16) -> Self {
+        Self {
+            x_base,
+            y_base,
+            slope,
+        }
+    }
+
+    pub const fn x_base(&self) -> i32 {
+        self.x_base
+    }
+
+    pub const fn y_base(&self) -> i16 {
+        self.y_base
+    }
+
+    pub const fn slope(&self) -> i16 {
+        self.slope
+    }
 }
 
 /// Helper owning PWL activation segments and exposing a `Gna2Tensor` view.

@@ -4,11 +4,28 @@ use crate::error::Result;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GnaProcessInfo {
     /// Operating system process ID.
-    pub pid: u32,
+    pid: u32,
     /// Process executable name (e.g. `my_app.exe`).
-    pub name: String,
+    name: String,
     /// Full path or name of the matched GNA module(s) loaded in the process.
-    pub matched_modules: Vec<String>,
+    matched_modules: Vec<String>,
+}
+
+impl GnaProcessInfo {
+    /// Operating system process ID.
+    pub const fn pid(&self) -> u32 {
+        self.pid
+    }
+
+    /// Process executable name.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Matched GNA module names or paths loaded in the process.
+    pub fn matched_modules(&self) -> &[String] {
+        &self.matched_modules
+    }
 }
 
 /// Snapshot of system-wide GNA usage state, including external process contention
@@ -16,11 +33,28 @@ pub struct GnaProcessInfo {
 #[derive(Debug, Clone, PartialEq)]
 pub struct GnaSystemUtilization {
     /// Processes currently having a GNA runtime library loaded.
-    pub active_gna_processes: Vec<GnaProcessInfo>,
+    active_gna_processes: Vec<GnaProcessInfo>,
     /// True if any process other than the current process has GNA loaded.
-    pub has_external_processes: bool,
+    has_external_processes: bool,
     /// Optional value read from an OS performance counter (e.g. Windows PDH).
-    pub pdh_counter_value: Option<f64>,
+    pdh_counter_value: Option<f64>,
+}
+
+impl GnaSystemUtilization {
+    /// Processes currently having a GNA runtime library loaded.
+    pub fn active_gna_processes(&self) -> &[GnaProcessInfo] {
+        &self.active_gna_processes
+    }
+
+    /// True if any process other than the current process has GNA loaded.
+    pub const fn has_external_processes(&self) -> bool {
+        self.has_external_processes
+    }
+
+    /// Optional value read from an OS performance counter.
+    pub const fn pdh_counter_value(&self) -> Option<f64> {
+        self.pdh_counter_value
+    }
 }
 
 /// Default module name substrings used to identify GNA runtime usage.
@@ -411,10 +445,10 @@ mod tests {
     #[test]
     fn test_inspect_system_gna_state_none_and_invalid_pdh() {
         let state_none = inspect_system_gna_state(None).unwrap();
-        assert!(state_none.pdh_counter_value.is_none());
+        assert!(state_none.pdh_counter_value().is_none());
 
         let state_invalid = inspect_system_gna_state(Some("\\NonExistent\\Counter")).unwrap();
-        assert!(state_invalid.pdh_counter_value.is_none());
+        assert!(state_invalid.pdh_counter_value().is_none());
     }
 
     #[cfg(target_os = "windows")]

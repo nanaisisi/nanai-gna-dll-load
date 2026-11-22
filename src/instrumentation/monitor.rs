@@ -4,11 +4,11 @@ use std::time::Duration;
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GnaDeviceProfile {
     /// Human-readable device or generation name (e.g. "GNA 3.0").
-    pub name: String,
+    name: String,
     /// Maximum hardware clock frequency in Hz.
-    pub max_clock_hz: u64,
+    max_clock_hz: u64,
     /// Optional number of MAC / processing units.
-    pub mac_units: Option<u32>,
+    mac_units: Option<u32>,
 }
 
 impl GnaDeviceProfile {
@@ -25,6 +25,21 @@ impl GnaDeviceProfile {
     pub fn with_mac_units(mut self, mac_units: u32) -> Self {
         self.mac_units = Some(mac_units);
         self
+    }
+
+    /// Device or generation name.
+    pub fn name(&self) -> &str {
+        &self.name
+    }
+
+    /// Maximum hardware clock frequency in Hz.
+    pub const fn max_clock_hz(&self) -> u64 {
+        self.max_clock_hz
+    }
+
+    /// Optional number of MAC / processing units.
+    pub const fn mac_units(&self) -> Option<u32> {
+        self.mac_units
     }
 }
 
