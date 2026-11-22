@@ -129,6 +129,56 @@ impl GnaBuffer {
     pub fn as_mut_slice(&mut self) -> &mut [u8] {
         unsafe { slice::from_raw_parts_mut(self.ptr.as_ptr(), self.size_granted) }
     }
+
+    /// View the buffer as a typed slice `&[T]` after checking alignment and size.
+    pub fn as_typed_slice<T: Copy>(&self) -> Result<&[T]> {
+        let align = std::mem::align_of::<T>();
+        let elem_size = std::mem::size_of::<T>();
+        if elem_size == 0 {
+            return Err(GnaError::Other("Zero-sized types are not supported".into()));
+        }
+        if !(self.ptr.as_ptr() as usize).is_multiple_of(align) {
+            return Err(GnaError::Other(format!(
+                "Buffer pointer {:p} is not aligned to {} bytes",
+                self.ptr.as_ptr(),
+                align
+            )));
+        }
+        let count = self.size_granted / elem_size;
+        Ok(unsafe { slice::from_raw_parts(self.ptr.as_ptr() as *const T, count) })
+    }
+
+    /// View the buffer as a mutable typed slice `&mut [T]` after checking alignment and size.
+    pub fn as_typed_mut_slice<T: Copy>(&mut self) -> Result<&mut [T]> {
+        let align = std::mem::align_of::<T>();
+        let elem_size = std::mem::size_of::<T>();
+        if elem_size == 0 {
+            return Err(GnaError::Other("Zero-sized types are not supported".into()));
+        }
+        if !(self.ptr.as_ptr() as usize).is_multiple_of(align) {
+            return Err(GnaError::Other(format!(
+                "Buffer pointer {:p} is not aligned to {} bytes",
+                self.ptr.as_ptr(),
+                align
+            )));
+        }
+        let count = self.size_granted / elem_size;
+        Ok(unsafe { slice::from_raw_parts_mut(self.ptr.as_ptr() as *mut T, count) })
+    }
+
+    /// Safely copy elements from `src` into this buffer, checking alignment and capacity.
+    pub fn copy_from_typed_slice<T: Copy>(&mut self, src: &[T]) -> Result<()> {
+        let dst = self.as_typed_mut_slice::<T>()?;
+        if src.len() > dst.len() {
+            return Err(GnaError::Other(format!(
+                "Source slice length ({}) exceeds buffer capacity ({})",
+                src.len(),
+                dst.len()
+            )));
+        }
+        dst[..src.len()].copy_from_slice(src);
+        Ok(())
+    }
 }
 
 impl Deref for GnaBuffer {

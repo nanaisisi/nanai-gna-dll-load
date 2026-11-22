@@ -245,6 +245,22 @@ impl Gna2Tensor {
         self
     }
 
+    /// Returns `true` if `data` is null or aligned to `alignment` bytes.
+    pub fn is_data_aligned(&self, alignment: usize) -> bool {
+        self.data.is_null() || (alignment > 0 && (self.data as usize).is_multiple_of(alignment))
+    }
+
+    /// Validate that `data` is aligned to `alignment` bytes (e.g. 64 or 4096).
+    pub fn validate_alignment(&self, alignment: usize) -> crate::Result<()> {
+        if !self.is_data_aligned(alignment) {
+            return Err(crate::error::GnaError::Other(format!(
+                "Tensor data pointer {:p} is not aligned to {} bytes",
+                self.data, alignment
+            )));
+        }
+        Ok(())
+    }
+
     pub fn d2(x: u32, y: u32, data_type: Gna2DataType, data: *mut std::ffi::c_void) -> Self {
         Self {
             shape: Gna2Shape::d2(x, y),

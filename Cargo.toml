@@ -8,6 +8,9 @@ autobins = false
 name = "nanai_gna_dll_load"
 path = "src/lib.rs"
 
+[features]
+mock = []
+
 [dependencies]
 libloading = "0.9.1"
 jiff = "1.0.2"

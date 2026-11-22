@@ -170,6 +170,26 @@ impl GnaRequestConfig {
         self.wait_request(request_id, timeout_ms)
     }
 
+    /// Non-blocking check for request completion (`timeout_ms = 0`).
+    ///
+    /// Returns `Ok(true)` if completed, `Ok(false)` if still in progress (timeout),
+    /// or `Err` on other failures.
+    pub fn try_wait(&self, request_id: u32) -> Result<bool> {
+        match self.wait_request(request_id, 0) {
+            Ok(()) => Ok(true),
+            Err(e) if e.to_string().contains("Timeout") => Ok(false),
+            Err(e) => Err(e),
+        }
+    }
+
+    /// Wait for all given `request_ids` to complete, each with `timeout_ms`.
+    pub fn wait_all(&self, request_ids: &[u32], timeout_ms: u32) -> Result<()> {
+        for &id in request_ids {
+            self.wait_request(id, timeout_ms)?;
+        }
+        Ok(())
+    }
+
     /// Attach a custom instrumentation configuration to this request.
     pub fn attach_instrumentation(
         &mut self,

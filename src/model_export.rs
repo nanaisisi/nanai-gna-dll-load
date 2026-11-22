@@ -91,6 +91,26 @@ impl GnaModelExportConfig {
     pub fn id(&self) -> u32 {
         self.export_config_id
     }
+
+    /// Export the specified component and copy it into an owned `Vec<u8>`.
+    pub fn export_to_vec(&self, component: Gna2ModelExportComponent) -> Result<Vec<u8>> {
+        let (ptr, size) = self.export(component)?;
+        if ptr.is_null() || size == 0 {
+            return Ok(Vec::new());
+        }
+        let slice = unsafe { std::slice::from_raw_parts(ptr as *const u8, size as usize) };
+        Ok(slice.to_vec())
+    }
+
+    /// Export the specified component and write it to `path`.
+    pub fn export_to_file<P: AsRef<std::path::Path>>(
+        &self,
+        component: Gna2ModelExportComponent,
+        path: P,
+    ) -> Result<()> {
+        let bytes = self.export_to_vec(component)?;
+        std::fs::write(path, bytes).map_err(|e| GnaError::Other(e.to_string()))
+    }
 }
 
 impl Drop for GnaModelExportConfig {
