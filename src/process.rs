@@ -99,6 +99,13 @@ pub fn is_gna_uncontended() -> Result<bool> {
 
 /// Publish the current process's `gna_allocated_bytes()` to a per-PID status file
 /// in the system temporary directory so external monitors can read it.
+///
+/// # Security & Operational Notes
+/// - Intended only for local diagnostics and visualization among trusted processes
+///   running under the same user account.
+/// - Files in the system temporary directory may be tampered with or left behind
+///   after an ungraceful exit (stale PID files); do not rely on this for security
+///   decisions or access control.
 pub fn publish_self_gna_allocated_bytes() -> Result<()> {
     let path = std::env::temp_dir().join(format!("nanai-gna-mem-{}.txt", std::process::id()));
     let bytes = crate::memory::gna_allocated_bytes();
@@ -107,6 +114,9 @@ pub fn publish_self_gna_allocated_bytes() -> Result<()> {
 }
 
 /// Read the published GNA allocated bytes for `pid` if available.
+///
+/// # Security & Operational Notes
+/// - Treat the returned value as an untrusted hint for local monitoring/UI only.
 pub fn read_process_gna_allocated_bytes(pid: u32) -> Option<usize> {
     let path = std::env::temp_dir().join(format!("nanai-gna-mem-{pid}.txt"));
     std::fs::read_to_string(path).ok()?.trim().parse().ok()

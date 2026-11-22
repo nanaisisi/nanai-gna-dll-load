@@ -188,3 +188,10 @@ cargo clippy --fix  --all --allow-dirty
 # コード生成
 cargo coupling --ai --no-git
 ```
+
+
+## セキュリティ・運用上の注意（プロセス監視・使用量共有）
+
+- `publish_self_gna_allocated_bytes` / `read_process_gna_allocated_bytes` は、同一ユーザー環境におけるローカル診断・可視化用途のみを想定しています。
+- システム一時ディレクトリ上のファイルは他プロセスからの改ざんや異常終了時の残存（stale PID ファイル）の可能性があるため、アクセス制御やセキュリティ判断には使用しないでください。
+- `detect_gna_processes` / `inspect_system_gna_state` によるプロセス列挙・PDH カウンタ参照も同様に、ローカル監視・負荷分担の参考値として扱ってください。
