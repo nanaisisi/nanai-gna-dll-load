@@ -241,3 +241,75 @@ fn test_instrumentation_edge_cases_zero_cycles_stall_gt_total_and_missing_points
     assert_eq!(stall_stats.hw_usage_ratio(), 0.0);
     assert_eq!(stall_stats.execution_time(), None);
 }
+
+#[test]
+fn test_instrumentation_lib_submission_completion_diff() {
+    reset_mock_inst_state();
+    MOCK_INST_STATE.with(|s| {
+        let mut st = s.borrow_mut();
+        st.total_cycles = 500;
+        st.stall_cycles = 100;
+        st.exec_time = 250;
+    });
+    let lib = GnaLibrary::from_symbol_table(full_inst_symbols());
+    let inst = GnaInstrumentationConfig::create(
+        &lib,
+        &[
+            Gna2InstrumentationPoint::HwTotalCycles,
+            Gna2InstrumentationPoint::HwStallCycles,
+            Gna2InstrumentationPoint::LibSubmission,
+            Gna2InstrumentationPoint::LibCompletion,
+        ],
+    )
+    .unwrap();
+    let stats = inst.compute_performance_stats().unwrap();
+    assert_eq!(stats.execution_time(), Some(250));
+}
+
+#[test]
+fn test_instrumentation_lib_submission_only_and_lib_execution_fallback() {
+    reset_mock_inst_state();
+    MOCK_INST_STATE.with(|s| {
+        let mut st = s.borrow_mut();
+        st.total_cycles = 500;
+        st.stall_cycles = 100;
+        st.exec_time = 123;
+    });
+    let lib = GnaLibrary::from_symbol_table(full_inst_symbols());
+
+    // LibSubmission only (no LibCompletion, no LibExecution) -> None
+    let inst_sub_only = GnaInstrumentationConfig::create(
+        &lib,
+        &[
+            Gna2InstrumentationPoint::HwTotalCycles,
+            Gna2InstrumentationPoint::HwStallCycles,
+            Gna2InstrumentationPoint::LibSubmission,
+        ],
+    )
+    .unwrap();
+    assert_eq!(
+        inst_sub_only
+            .compute_performance_stats()
+            .unwrap()
+            .execution_time(),
+        None
+    );
+
+    // LibExecution alone -> falls back to LibExecution value
+    let inst_exec_only = GnaInstrumentationConfig::create(
+        &lib,
+        &[
+            Gna2InstrumentationPoint::HwTotalCycles,
+            Gna2InstrumentationPoint::HwStallCycles,
+            Gna2InstrumentationPoint::LibExecution,
+        ],
+    )
+    .unwrap();
+    assert_eq!(
+        inst_exec_only
+            .compute_performance_stats()
+            .unwrap()
+            .execution_time(),
+        Some(123)
+    );
+}

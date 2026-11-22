@@ -403,6 +403,12 @@ mod tests {
     }
 
     #[test]
+    fn test_is_gna_uncontended_does_not_fail() {
+        let res = is_gna_uncontended();
+        assert!(res.is_ok());
+    }
+
+    #[test]
     fn test_detect_processes_empty_patterns() {
         let res = detect_processes_by_module_patterns(&[]).unwrap();
         assert!(res.is_empty());

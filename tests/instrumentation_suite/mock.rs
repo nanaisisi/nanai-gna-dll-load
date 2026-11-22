@@ -109,6 +109,8 @@ pub(super) unsafe extern "C" fn mock_inst_create(
                     Gna2InstrumentationPoint::HwTotalCycles => st.total_cycles,
                     Gna2InstrumentationPoint::HwStallCycles => st.stall_cycles,
                     Gna2InstrumentationPoint::LibExecution => st.exec_time,
+                    Gna2InstrumentationPoint::LibSubmission => 100,
+                    Gna2InstrumentationPoint::LibCompletion => 100 + st.exec_time,
                     _ => st.other_point_value,
                 };
             }
