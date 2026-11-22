@@ -123,38 +123,10 @@ impl GnaInstrumentationConfig {
         &self.results
     }
 
-    /// Calculate hardware utilization `(TotalCycles - StallCycles) / TotalCycles`.
-    ///
-    /// Requires `HwTotalCycles` and `HwStallCycles` to be included in points.
-    pub fn compute_hw_usage(&self) -> Result<f64, GnaError> {
+    fn extract_point_metrics(&self) -> Result<(u64, u64, Option<u64>), GnaError> {
         let mut total = None;
         let mut stall = None;
-
-        for (&pt, &val) in self.points.iter().zip(self.results.iter()) {
-            match pt {
-                Gna2InstrumentationPoint::HwTotalCycles => total = Some(val),
-                Gna2InstrumentationPoint::HwStallCycles => stall = Some(val),
-                _ => {}
-            }
-        }
-
-        let total: u64 = total
-            .ok_or_else(|| GnaError::Other("Missing HwTotalCycles instrumentation point".into()))?;
-        let stall = stall
-            .ok_or_else(|| GnaError::Other("Missing HwStallCycles instrumentation point".into()))?;
-
-        if total == 0 {
-            return Err(GnaError::Other("HwTotalCycles is zero".into()));
-        }
-
-        Ok((total.saturating_sub(stall) as f64) / (total as f64))
-    }
-
-    /// Compute detailed performance statistics from instrumentation points and results, AND record key metrics.
-    pub fn compute_performance_stats(&self) -> Result<GnaPerformanceStats, GnaError> {
-        let mut total = None;
-        let mut stall = None;
-        let mut exec_time: Option<u64> = None;
+        let mut exec_time = None;
 
         for (&pt, &val) in self.points.iter().zip(self.results.iter()) {
             match pt {
@@ -169,6 +141,24 @@ impl GnaInstrumentationConfig {
             .ok_or_else(|| GnaError::Other("Missing HwTotalCycles instrumentation point".into()))?;
         let stall_cycles = stall
             .ok_or_else(|| GnaError::Other("Missing HwStallCycles instrumentation point".into()))?;
+
+        Ok((total_cycles, stall_cycles, exec_time))
+    }
+
+    /// Calculate hardware utilization `(TotalCycles - StallCycles) / TotalCycles`.
+    ///
+    /// Requires `HwTotalCycles` and `HwStallCycles` to be included in points.
+    pub fn compute_hw_usage(&self) -> Result<f64, GnaError> {
+        let (total, stall, _) = self.extract_point_metrics()?;
+        if total == 0 {
+            return Err(GnaError::Other("HwTotalCycles is zero".into()));
+        }
+        Ok((total.saturating_sub(stall) as f64) / (total as f64))
+    }
+
+    /// Compute detailed performance statistics from instrumentation points and results, AND record key metrics.
+    pub fn compute_performance_stats(&self) -> Result<GnaPerformanceStats, GnaError> {
+        let (total_cycles, stall_cycles, exec_time) = self.extract_point_metrics()?;
 
         let stats = GnaPerformanceStats::from_cycles(total_cycles, stall_cycles)
             .with_execution_time(exec_time);

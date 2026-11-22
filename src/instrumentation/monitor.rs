@@ -142,13 +142,19 @@ impl GnaUsageMonitor {
         self.cumulative_hw_usage_ratio() * 100.0
     }
 
-    /// Average execution time per inference (if execution time was recorded).
-    pub fn average_execution_time(&self) -> Option<f64> {
+    /// Total execution time accumulated across all recorded inferences (in configured unit, e.g. microseconds).
+    pub fn cumulative_execution_time(&self) -> Option<u64> {
         if self.exec_time_count > 0 {
-            Some((self.cumulative_exec_time as f64) / (self.exec_time_count as f64))
+            Some(self.cumulative_exec_time)
         } else {
             None
         }
+    }
+
+    /// Average execution time per inference (if execution time was recorded).
+    pub fn average_execution_time(&self) -> Option<f64> {
+        self.cumulative_execution_time()
+            .map(|total| (total as f64) / (self.exec_time_count as f64))
     }
 
     /// Most recent performance stats recorded, if any.

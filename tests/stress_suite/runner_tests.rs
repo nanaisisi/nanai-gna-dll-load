@@ -39,9 +39,15 @@ fn test_load_tester_iterations_mode_single_and_multi_concurrency() {
     assert_eq!(report_seq.usage_monitor().inference_count(), 4);
     assert_eq!(report_seq.usage_monitor().cumulative_total_cycles(), 4000);
     assert_eq!(
+        report_seq.usage_monitor().cumulative_execution_time(),
+        Some(160)
+    );
+    assert_eq!(
         report_seq.usage_monitor().average_execution_time(),
         Some(40.0)
     );
+    assert!(report_seq.hw_duty_cycle_ratio().unwrap() > 0.0);
+    assert!(report_seq.hw_duty_cycle_percentage().unwrap() > 0.0);
     report_seq.print_summary();
 
     // Concurrency > 1, instrumentation already attached on req_cfg
@@ -76,7 +82,18 @@ fn test_load_tester_track_hw_usage_false_and_no_exec_time_summary() {
     let report_no_hw = tester_no_hw.run(&mut req_cfg).unwrap();
     assert_eq!(report_no_hw.completed_inferences(), 4);
     assert_eq!(report_no_hw.usage_monitor().inference_count(), 0);
+    assert_eq!(report_no_hw.hw_duty_cycle_ratio(), None);
+    assert_eq!(report_no_hw.hw_duty_cycle_percentage(), None);
     report_no_hw.print_summary();
+
+    let report_zero = GnaLoadTester::new(
+        GnaLoadTestConfig::new()
+            .with_iterations(0)
+            .with_track_hw_usage(false),
+    )
+    .run(&mut req_cfg)
+    .unwrap();
+    assert_eq!(report_zero.hw_duty_cycle_ratio(), None);
 
     // Pre-attached instrumentation without LibExecution -> print_summary shows HW metrics without Avg Hardware Time
     let inst_no_exec = GnaInstrumentationConfig::create(

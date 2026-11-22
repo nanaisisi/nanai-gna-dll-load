@@ -162,6 +162,23 @@ impl GnaLoadTestReport {
     pub fn usage_monitor(&self) -> &GnaUsageMonitor {
         &self.usage_monitor
     }
+
+    /// Wall-clock device duty cycle ratio in `[0.0, 1.0]` (`cumulative_execution_time_us / elapsed_time_us`),
+    /// if hardware execution time was recorded and elapsed time is non-zero.
+    pub fn hw_duty_cycle_ratio(&self) -> Option<f64> {
+        let elapsed_us = self.elapsed_time.as_secs_f64() * 1_000_000.0;
+        if elapsed_us <= 0.0 {
+            return None;
+        }
+        let exec_us = self.usage_monitor.cumulative_execution_time()? as f64;
+        Some((exec_us / elapsed_us).clamp(0.0, 1.0))
+    }
+
+    /// Wall-clock device duty cycle percentage (`0.0%` to `100.0%`), if available.
+    pub fn hw_duty_cycle_percentage(&self) -> Option<f64> {
+        self.hw_duty_cycle_ratio().map(|ratio| ratio * 100.0)
+    }
+
     /// Print a formatted summary report to standard output.
     pub fn print_summary(&self) {
         println!("==================================================");
@@ -210,11 +227,15 @@ impl GnaLoadTestReport {
                 self.usage_monitor.cumulative_active_cycles()
             );
             println!(
-                "  Weighted HW Usage    : {:.2}%",
+                "  Pipeline Efficiency  : {:.2}%",
                 self.usage_monitor.cumulative_hw_usage_percentage()
             );
             if let Some(avg_t) = self.usage_monitor.average_execution_time() {
-                println!("  Avg Hardware Time    : {:.2} cycles/us", avg_t);
+                println!("  Avg Execution Time   : {:.2} us", avg_t);
+                println!(
+                    "  Wall-Clock Busy Rate : {:.2}%",
+                    self.hw_duty_cycle_percentage().unwrap_or(0.0)
+                );
             }
         }
         println!("==================================================");
