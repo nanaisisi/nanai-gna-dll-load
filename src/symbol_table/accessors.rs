@@ -1,6 +1,19 @@
 use super::GnaSymbolTable;
 use super::fn_types::*;
 
+macro_rules! impl_optional_setters {
+    ($(($method:ident, $field:ident, $ty:ty)),* $(,)?) => {
+        impl GnaSymbolTable {
+            $(
+                pub fn $method(mut self, f: $ty) -> Self {
+                    self.$field = Some(f);
+                    self
+                }
+            )*
+        }
+    };
+}
+
 impl GnaSymbolTable {
     /// Creates a symbol table from the 6 required GNA symbols, leaving all optional symbols `None`.
     pub fn from_required(
@@ -52,206 +65,143 @@ impl GnaSymbolTable {
             status_get_max_message_length: None,
         }
     }
-
-    pub fn with_device_create_for_export(mut self, f: FnGna2DeviceCreateForExport) -> Self {
-        self.device_create_for_export = Some(f);
-        self
-    }
-
-    pub fn with_device_set_number_of_threads(mut self, f: FnGna2DeviceSetNumberOfThreads) -> Self {
-        self.device_set_number_of_threads = Some(f);
-        self
-    }
-
-    pub fn with_get_library_version(mut self, f: FnGna2GetLibraryVersion) -> Self {
-        self.get_library_version = Some(f);
-        self
-    }
-
-    pub fn with_memory_alloc_for_device(mut self, f: FnGna2MemoryAllocForDevice) -> Self {
-        self.memory_alloc_for_device = Some(f);
-        self
-    }
-
-    pub fn with_memory_set_tag(mut self, f: FnGna2MemorySetTag) -> Self {
-        self.memory_set_tag = Some(f);
-        self
-    }
-
-    pub fn with_model_create(mut self, f: FnGna2ModelCreate) -> Self {
-        self.model_create = Some(f);
-        self
-    }
-
-    pub fn with_model_release(mut self, f: FnGna2ModelRelease) -> Self {
-        self.model_release = Some(f);
-        self
-    }
-
-    pub fn with_model_get_last_error(mut self, f: FnGna2ModelGetLastError) -> Self {
-        self.model_get_last_error = Some(f);
-        self
-    }
-
-    pub fn with_model_error_get_message(mut self, f: FnGna2ModelErrorGetMessage) -> Self {
-        self.model_error_get_message = Some(f);
-        self
-    }
-
-    pub fn with_model_error_get_max_message_length(
-        mut self,
-        f: FnGna2ModelErrorGetMaxMessageLength,
-    ) -> Self {
-        self.model_error_get_max_message_length = Some(f);
-        self
-    }
-
-    pub fn with_operation_init_fully_connected_affine(
-        mut self,
-        f: FnGna2OperationInitFullyConnectedAffine,
-    ) -> Self {
-        self.operation_init_fully_connected_affine = Some(f);
-        self
-    }
-
-    pub fn with_request_config_create(mut self, f: FnGna2RequestConfigCreate) -> Self {
-        self.request_config_create = Some(f);
-        self
-    }
-
-    pub fn with_request_config_set_operand_buffer(
-        mut self,
-        f: FnGna2RequestConfigSetOperandBuffer,
-    ) -> Self {
-        self.request_config_set_operand_buffer = Some(f);
-        self
-    }
-
-    pub fn with_request_config_enable_active_list(
-        mut self,
-        f: FnGna2RequestConfigEnableActiveList,
-    ) -> Self {
-        self.request_config_enable_active_list = Some(f);
-        self
-    }
-
-    pub fn with_request_config_enable_hardware_consistency(
-        mut self,
-        f: FnGna2RequestConfigEnableHardwareConsistency,
-    ) -> Self {
-        self.request_config_enable_hardware_consistency = Some(f);
-        self
-    }
-
-    pub fn with_request_config_set_acceleration_mode(
-        mut self,
-        f: FnGna2RequestConfigSetAccelerationMode,
-    ) -> Self {
-        self.request_config_set_acceleration_mode = Some(f);
-        self
-    }
-
-    pub fn with_request_config_release(mut self, f: FnGna2RequestConfigRelease) -> Self {
-        self.request_config_release = Some(f);
-        self
-    }
-
-    pub fn with_request_enqueue(mut self, f: FnGna2RequestEnqueue) -> Self {
-        self.request_enqueue = Some(f);
-        self
-    }
-
-    pub fn with_request_wait(mut self, f: FnGna2RequestWait) -> Self {
-        self.request_wait = Some(f);
-        self
-    }
-
-    pub fn with_instrumentation_config_create(
-        mut self,
-        f: FnGna2InstrumentationConfigCreate,
-    ) -> Self {
-        self.instrumentation_config_create = Some(f);
-        self
-    }
-
-    pub fn with_instrumentation_config_assign_to_request_config(
-        mut self,
-        f: FnGna2InstrumentationConfigAssignToRequestConfig,
-    ) -> Self {
-        self.instrumentation_config_assign_to_request_config = Some(f);
-        self
-    }
-
-    pub fn with_instrumentation_config_set_unit(
-        mut self,
-        f: FnGna2InstrumentationConfigSetUnit,
-    ) -> Self {
-        self.instrumentation_config_set_unit = Some(f);
-        self
-    }
-
-    pub fn with_instrumentation_config_set_mode(
-        mut self,
-        f: FnGna2InstrumentationConfigSetMode,
-    ) -> Self {
-        self.instrumentation_config_set_mode = Some(f);
-        self
-    }
-
-    pub fn with_instrumentation_config_release(
-        mut self,
-        f: FnGna2InstrumentationConfigRelease,
-    ) -> Self {
-        self.instrumentation_config_release = Some(f);
-        self
-    }
-
-    pub fn with_model_export_config_create(mut self, f: FnGna2ModelExportConfigCreate) -> Self {
-        self.model_export_config_create = Some(f);
-        self
-    }
-
-    pub fn with_model_export_config_release(mut self, f: FnGna2ModelExportConfigRelease) -> Self {
-        self.model_export_config_release = Some(f);
-        self
-    }
-
-    pub fn with_model_export_config_set_source(
-        mut self,
-        f: FnGna2ModelExportConfigSetSource,
-    ) -> Self {
-        self.model_export_config_set_source = Some(f);
-        self
-    }
-
-    pub fn with_model_export_config_set_target(
-        mut self,
-        f: FnGna2ModelExportConfigSetTarget,
-    ) -> Self {
-        self.model_export_config_set_target = Some(f);
-        self
-    }
-
-    pub fn with_model_export(mut self, f: FnGna2ModelExport) -> Self {
-        self.model_export = Some(f);
-        self
-    }
-
-    pub fn with_model_override_alignment(mut self, f: FnGna2ModelOverrideAlignment) -> Self {
-        self.model_override_alignment = Some(f);
-        self
-    }
-
-    pub fn with_status_get_message(mut self, f: FnGna2StatusGetMessage) -> Self {
-        self.status_get_message = Some(f);
-        self
-    }
-
-    pub fn with_status_get_max_message_length(
-        mut self,
-        f: FnGna2StatusGetMaxMessageLength,
-    ) -> Self {
-        self.status_get_max_message_length = Some(f);
-        self
-    }
 }
+
+impl_optional_setters!(
+    (
+        with_device_create_for_export,
+        device_create_for_export,
+        FnGna2DeviceCreateForExport
+    ),
+    (
+        with_device_set_number_of_threads,
+        device_set_number_of_threads,
+        FnGna2DeviceSetNumberOfThreads
+    ),
+    (
+        with_get_library_version,
+        get_library_version,
+        FnGna2GetLibraryVersion
+    ),
+    (
+        with_memory_alloc_for_device,
+        memory_alloc_for_device,
+        FnGna2MemoryAllocForDevice
+    ),
+    (with_memory_set_tag, memory_set_tag, FnGna2MemorySetTag),
+    (with_model_create, model_create, FnGna2ModelCreate),
+    (with_model_release, model_release, FnGna2ModelRelease),
+    (
+        with_model_get_last_error,
+        model_get_last_error,
+        FnGna2ModelGetLastError
+    ),
+    (
+        with_model_error_get_message,
+        model_error_get_message,
+        FnGna2ModelErrorGetMessage
+    ),
+    (
+        with_model_error_get_max_message_length,
+        model_error_get_max_message_length,
+        FnGna2ModelErrorGetMaxMessageLength
+    ),
+    (
+        with_operation_init_fully_connected_affine,
+        operation_init_fully_connected_affine,
+        FnGna2OperationInitFullyConnectedAffine
+    ),
+    (
+        with_request_config_create,
+        request_config_create,
+        FnGna2RequestConfigCreate
+    ),
+    (
+        with_request_config_set_operand_buffer,
+        request_config_set_operand_buffer,
+        FnGna2RequestConfigSetOperandBuffer
+    ),
+    (
+        with_request_config_enable_active_list,
+        request_config_enable_active_list,
+        FnGna2RequestConfigEnableActiveList
+    ),
+    (
+        with_request_config_enable_hardware_consistency,
+        request_config_enable_hardware_consistency,
+        FnGna2RequestConfigEnableHardwareConsistency
+    ),
+    (
+        with_request_config_set_acceleration_mode,
+        request_config_set_acceleration_mode,
+        FnGna2RequestConfigSetAccelerationMode
+    ),
+    (
+        with_request_config_release,
+        request_config_release,
+        FnGna2RequestConfigRelease
+    ),
+    (with_request_enqueue, request_enqueue, FnGna2RequestEnqueue),
+    (with_request_wait, request_wait, FnGna2RequestWait),
+    (
+        with_instrumentation_config_create,
+        instrumentation_config_create,
+        FnGna2InstrumentationConfigCreate
+    ),
+    (
+        with_instrumentation_config_assign_to_request_config,
+        instrumentation_config_assign_to_request_config,
+        FnGna2InstrumentationConfigAssignToRequestConfig
+    ),
+    (
+        with_instrumentation_config_set_unit,
+        instrumentation_config_set_unit,
+        FnGna2InstrumentationConfigSetUnit
+    ),
+    (
+        with_instrumentation_config_set_mode,
+        instrumentation_config_set_mode,
+        FnGna2InstrumentationConfigSetMode
+    ),
+    (
+        with_instrumentation_config_release,
+        instrumentation_config_release,
+        FnGna2InstrumentationConfigRelease
+    ),
+    (
+        with_model_export_config_create,
+        model_export_config_create,
+        FnGna2ModelExportConfigCreate
+    ),
+    (
+        with_model_export_config_release,
+        model_export_config_release,
+        FnGna2ModelExportConfigRelease
+    ),
+    (
+        with_model_export_config_set_source,
+        model_export_config_set_source,
+        FnGna2ModelExportConfigSetSource
+    ),
+    (
+        with_model_export_config_set_target,
+        model_export_config_set_target,
+        FnGna2ModelExportConfigSetTarget
+    ),
+    (with_model_export, model_export, FnGna2ModelExport),
+    (
+        with_model_override_alignment,
+        model_override_alignment,
+        FnGna2ModelOverrideAlignment
+    ),
+    (
+        with_status_get_message,
+        status_get_message,
+        FnGna2StatusGetMessage
+    ),
+    (
+        with_status_get_max_message_length,
+        status_get_max_message_length,
+        FnGna2StatusGetMaxMessageLength
+    ),
+);

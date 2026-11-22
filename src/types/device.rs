@@ -7,7 +7,7 @@ pub const GNA2_STATUS_MODEL_ERROR_UNAVAILABLE: Gna2Status = 3;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Gna2DeviceVersion(pub(crate) u32);
+pub struct Gna2DeviceVersion(u32);
 
 impl Gna2DeviceVersion {
     pub const fn new(raw: u32) -> Self {

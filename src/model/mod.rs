@@ -66,7 +66,9 @@ impl GnaModel {
         } else {
             Some(format!(
                 "Model item error: type={:?}, reason={:?}, val={}",
-                error_desc.source.item_type, error_desc.reason, error_desc.value
+                error_desc.source().item_type(),
+                error_desc.reason(),
+                error_desc.value()
             ))
         }
     }

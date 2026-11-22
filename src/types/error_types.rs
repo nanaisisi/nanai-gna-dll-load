@@ -2,7 +2,7 @@ use super::GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES;
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Gna2ItemType(pub(crate) i32);
+pub struct Gna2ItemType(i32);
 
 impl Gna2ItemType {
     pub const NONE: Self = Self(-1);
@@ -35,12 +35,12 @@ impl Gna2ItemType {
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Gna2ModelItem {
-    pub(crate) item_type: Gna2ItemType,
-    pub(crate) operation_index: i32,
-    pub(crate) operand_index: i32,
-    pub(crate) parameter_index: i32,
-    pub(crate) shape_dimension_index: i32,
-    pub(crate) properties: [i32; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES],
+    item_type: Gna2ItemType,
+    operation_index: i32,
+    operand_index: i32,
+    parameter_index: i32,
+    shape_dimension_index: i32,
+    properties: [i32; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES],
 }
 
 impl Gna2ModelItem {
@@ -108,7 +108,7 @@ impl Gna2ModelItem {
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Gna2ErrorType(pub(crate) i32);
+pub struct Gna2ErrorType(i32);
 
 impl Gna2ErrorType {
     pub const NONE: Self = Self(0);
@@ -144,9 +144,9 @@ impl Gna2ErrorType {
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Gna2ModelError {
-    pub(crate) source: Gna2ModelItem,
-    pub(crate) reason: Gna2ErrorType,
-    pub(crate) value: i64,
+    source: Gna2ModelItem,
+    reason: Gna2ErrorType,
+    value: i64,
 }
 
 impl Gna2ModelError {

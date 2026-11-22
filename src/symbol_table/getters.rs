@@ -1,236 +1,168 @@
 use super::GnaSymbolTable;
 use super::fn_types::*;
 
-impl GnaSymbolTable {
-    pub fn device_get_count(&self) -> FnGna2DeviceGetCount {
-        self.device_get_count
-    }
-
-    pub fn device_get_version(&self) -> FnGna2DeviceGetVersion {
-        self.device_get_version
-    }
-
-    pub fn device_open(&self) -> FnGna2DeviceOpen {
-        self.device_open
-    }
-
-    pub fn device_create_for_export(&self) -> Option<FnGna2DeviceCreateForExport> {
-        self.device_create_for_export
-    }
-
-    pub fn device_close(&self) -> FnGna2DeviceClose {
-        self.device_close
-    }
-
-    pub fn device_set_number_of_threads(&self) -> Option<FnGna2DeviceSetNumberOfThreads> {
-        self.device_set_number_of_threads
-    }
-
-    pub fn get_library_version(&self) -> Option<FnGna2GetLibraryVersion> {
-        self.get_library_version
-    }
-
-    pub fn memory_alloc(&self) -> FnGna2MemoryAlloc {
-        self.memory_alloc
-    }
-
-    pub fn memory_alloc_for_device(&self) -> Option<FnGna2MemoryAllocForDevice> {
-        self.memory_alloc_for_device
-    }
-
-    pub fn memory_free(&self) -> FnGna2MemoryFree {
-        self.memory_free
-    }
-
-    pub fn memory_set_tag(&self) -> Option<FnGna2MemorySetTag> {
-        self.memory_set_tag
-    }
-
-    pub fn model_create(&self) -> Option<FnGna2ModelCreate> {
-        self.model_create
-    }
-
-    pub fn model_release(&self) -> Option<FnGna2ModelRelease> {
-        self.model_release
-    }
-
-    pub fn model_get_last_error(&self) -> Option<FnGna2ModelGetLastError> {
-        self.model_get_last_error
-    }
-
-    pub fn model_error_get_message(&self) -> Option<FnGna2ModelErrorGetMessage> {
-        self.model_error_get_message
-    }
-
-    pub fn model_error_get_max_message_length(
-        &self,
-    ) -> Option<FnGna2ModelErrorGetMaxMessageLength> {
-        self.model_error_get_max_message_length
-    }
-
-    pub fn operation_init_fully_connected_affine(
-        &self,
-    ) -> Option<FnGna2OperationInitFullyConnectedAffine> {
-        self.operation_init_fully_connected_affine
-    }
-
-    pub fn request_config_create(&self) -> Option<FnGna2RequestConfigCreate> {
-        self.request_config_create
-    }
-
-    pub fn request_config_set_operand_buffer(&self) -> Option<FnGna2RequestConfigSetOperandBuffer> {
-        self.request_config_set_operand_buffer
-    }
-
-    pub fn request_config_enable_active_list(&self) -> Option<FnGna2RequestConfigEnableActiveList> {
-        self.request_config_enable_active_list
-    }
-
-    pub fn request_config_enable_hardware_consistency(
-        &self,
-    ) -> Option<FnGna2RequestConfigEnableHardwareConsistency> {
-        self.request_config_enable_hardware_consistency
-    }
-
-    pub fn request_config_set_acceleration_mode(
-        &self,
-    ) -> Option<FnGna2RequestConfigSetAccelerationMode> {
-        self.request_config_set_acceleration_mode
-    }
-
-    pub fn request_config_release(&self) -> Option<FnGna2RequestConfigRelease> {
-        self.request_config_release
-    }
-
-    pub fn request_enqueue(&self) -> Option<FnGna2RequestEnqueue> {
-        self.request_enqueue
-    }
-
-    pub fn request_wait(&self) -> Option<FnGna2RequestWait> {
-        self.request_wait
-    }
-
-    pub fn instrumentation_config_create(&self) -> Option<FnGna2InstrumentationConfigCreate> {
-        self.instrumentation_config_create
-    }
-
-    pub fn instrumentation_config_assign_to_request_config(
-        &self,
-    ) -> Option<FnGna2InstrumentationConfigAssignToRequestConfig> {
-        self.instrumentation_config_assign_to_request_config
-    }
-
-    pub fn instrumentation_config_set_unit(&self) -> Option<FnGna2InstrumentationConfigSetUnit> {
-        self.instrumentation_config_set_unit
-    }
-
-    pub fn instrumentation_config_set_mode(&self) -> Option<FnGna2InstrumentationConfigSetMode> {
-        self.instrumentation_config_set_mode
-    }
-
-    pub fn instrumentation_config_release(&self) -> Option<FnGna2InstrumentationConfigRelease> {
-        self.instrumentation_config_release
-    }
-
-    pub fn model_export_config_create(&self) -> Option<FnGna2ModelExportConfigCreate> {
-        self.model_export_config_create
-    }
-
-    pub fn model_export_config_release(&self) -> Option<FnGna2ModelExportConfigRelease> {
-        self.model_export_config_release
-    }
-
-    pub fn model_export_config_set_source(&self) -> Option<FnGna2ModelExportConfigSetSource> {
-        self.model_export_config_set_source
-    }
-
-    pub fn model_export_config_set_target(&self) -> Option<FnGna2ModelExportConfigSetTarget> {
-        self.model_export_config_set_target
-    }
-
-    pub fn model_export(&self) -> Option<FnGna2ModelExport> {
-        self.model_export
-    }
-
-    pub fn model_override_alignment(&self) -> Option<FnGna2ModelOverrideAlignment> {
-        self.model_override_alignment
-    }
-
-    pub fn status_get_message(&self) -> Option<FnGna2StatusGetMessage> {
-        self.status_get_message
-    }
-
-    pub fn status_get_max_message_length(&self) -> Option<FnGna2StatusGetMaxMessageLength> {
-        self.status_get_max_message_length
-    }
+macro_rules! impl_required_getters {
+    ($(($field:ident, $ty:ty)),* $(,)?) => {
+        impl GnaSymbolTable {
+            $(
+                pub fn $field(&self) -> $ty {
+                    self.$field
+                }
+            )*
+        }
+    };
 }
 
-impl GnaSymbolTable {
-    pub fn clear_get_library_version(&mut self) {
-        self.get_library_version = None;
-    }
-
-    pub fn clear_model_create(&mut self) {
-        self.model_create = None;
-    }
-
-    pub fn clear_model_release(&mut self) {
-        self.model_release = None;
-    }
-
-    pub fn clear_model_get_last_error(&mut self) {
-        self.model_get_last_error = None;
-    }
-
-    pub fn clear_model_error_get_message(&mut self) {
-        self.model_error_get_message = None;
-    }
-
-    pub fn clear_model_error_get_max_message_length(&mut self) {
-        self.model_error_get_max_message_length = None;
-    }
-
-    pub fn clear_operation_init_fully_connected_affine(&mut self) {
-        self.operation_init_fully_connected_affine = None;
-    }
-
-    pub fn clear_instrumentation_config_create(&mut self) {
-        self.instrumentation_config_create = None;
-    }
-
-    pub fn clear_instrumentation_config_assign_to_request_config(&mut self) {
-        self.instrumentation_config_assign_to_request_config = None;
-    }
-
-    pub fn clear_instrumentation_config_set_unit(&mut self) {
-        self.instrumentation_config_set_unit = None;
-    }
-
-    pub fn clear_model_export_config_create(&mut self) {
-        self.model_export_config_create = None;
-    }
-
-    pub fn clear_model_export_config_release(&mut self) {
-        self.model_export_config_release = None;
-    }
-
-    pub fn clear_model_export_config_set_source(&mut self) {
-        self.model_export_config_set_source = None;
-    }
-
-    pub fn clear_model_export_config_set_target(&mut self) {
-        self.model_export_config_set_target = None;
-    }
-
-    pub fn clear_model_export(&mut self) {
-        self.model_export = None;
-    }
-
-    pub fn clear_model_override_alignment(&mut self) {
-        self.model_override_alignment = None;
-    }
-
-    pub fn clear_status_get_message(&mut self) {
-        self.status_get_message = None;
-    }
+macro_rules! impl_optional_getters {
+    ($(($field:ident, $ty:ty)),* $(,)?) => {
+        impl GnaSymbolTable {
+            $(
+                pub fn $field(&self) -> Option<$ty> {
+                    self.$field
+                }
+            )*
+        }
+    };
 }
+
+macro_rules! impl_optional_clearers {
+    ($(($method:ident, $field:ident)),* $(,)?) => {
+        impl GnaSymbolTable {
+            $(
+                pub fn $method(&mut self) {
+                    self.$field = None;
+                }
+            )*
+        }
+    };
+}
+
+impl_required_getters!(
+    (device_get_count, FnGna2DeviceGetCount),
+    (device_get_version, FnGna2DeviceGetVersion),
+    (device_open, FnGna2DeviceOpen),
+    (device_close, FnGna2DeviceClose),
+    (memory_alloc, FnGna2MemoryAlloc),
+    (memory_free, FnGna2MemoryFree),
+);
+
+impl_optional_getters!(
+    (device_create_for_export, FnGna2DeviceCreateForExport),
+    (device_set_number_of_threads, FnGna2DeviceSetNumberOfThreads),
+    (get_library_version, FnGna2GetLibraryVersion),
+    (memory_alloc_for_device, FnGna2MemoryAllocForDevice),
+    (memory_set_tag, FnGna2MemorySetTag),
+    (model_create, FnGna2ModelCreate),
+    (model_release, FnGna2ModelRelease),
+    (model_get_last_error, FnGna2ModelGetLastError),
+    (model_error_get_message, FnGna2ModelErrorGetMessage),
+    (
+        model_error_get_max_message_length,
+        FnGna2ModelErrorGetMaxMessageLength
+    ),
+    (
+        operation_init_fully_connected_affine,
+        FnGna2OperationInitFullyConnectedAffine
+    ),
+    (request_config_create, FnGna2RequestConfigCreate),
+    (
+        request_config_set_operand_buffer,
+        FnGna2RequestConfigSetOperandBuffer
+    ),
+    (
+        request_config_enable_active_list,
+        FnGna2RequestConfigEnableActiveList
+    ),
+    (
+        request_config_enable_hardware_consistency,
+        FnGna2RequestConfigEnableHardwareConsistency
+    ),
+    (
+        request_config_set_acceleration_mode,
+        FnGna2RequestConfigSetAccelerationMode
+    ),
+    (request_config_release, FnGna2RequestConfigRelease),
+    (request_enqueue, FnGna2RequestEnqueue),
+    (request_wait, FnGna2RequestWait),
+    (
+        instrumentation_config_create,
+        FnGna2InstrumentationConfigCreate
+    ),
+    (
+        instrumentation_config_assign_to_request_config,
+        FnGna2InstrumentationConfigAssignToRequestConfig
+    ),
+    (
+        instrumentation_config_set_unit,
+        FnGna2InstrumentationConfigSetUnit
+    ),
+    (
+        instrumentation_config_set_mode,
+        FnGna2InstrumentationConfigSetMode
+    ),
+    (
+        instrumentation_config_release,
+        FnGna2InstrumentationConfigRelease
+    ),
+    (model_export_config_create, FnGna2ModelExportConfigCreate),
+    (model_export_config_release, FnGna2ModelExportConfigRelease),
+    (
+        model_export_config_set_source,
+        FnGna2ModelExportConfigSetSource
+    ),
+    (
+        model_export_config_set_target,
+        FnGna2ModelExportConfigSetTarget
+    ),
+    (model_export, FnGna2ModelExport),
+    (model_override_alignment, FnGna2ModelOverrideAlignment),
+    (status_get_message, FnGna2StatusGetMessage),
+    (
+        status_get_max_message_length,
+        FnGna2StatusGetMaxMessageLength
+    ),
+);
+
+impl_optional_clearers!(
+    (clear_get_library_version, get_library_version),
+    (clear_model_create, model_create),
+    (clear_model_release, model_release),
+    (clear_model_get_last_error, model_get_last_error),
+    (clear_model_error_get_message, model_error_get_message),
+    (
+        clear_model_error_get_max_message_length,
+        model_error_get_max_message_length
+    ),
+    (
+        clear_operation_init_fully_connected_affine,
+        operation_init_fully_connected_affine
+    ),
+    (
+        clear_instrumentation_config_create,
+        instrumentation_config_create
+    ),
+    (
+        clear_instrumentation_config_assign_to_request_config,
+        instrumentation_config_assign_to_request_config
+    ),
+    (
+        clear_instrumentation_config_set_unit,
+        instrumentation_config_set_unit
+    ),
+    (clear_model_export_config_create, model_export_config_create),
+    (
+        clear_model_export_config_release,
+        model_export_config_release
+    ),
+    (
+        clear_model_export_config_set_source,
+        model_export_config_set_source
+    ),
+    (
+        clear_model_export_config_set_target,
+        model_export_config_set_target
+    ),
+    (clear_model_export, model_export),
+    (clear_model_override_alignment, model_override_alignment),
+    (clear_status_get_message, status_get_message),
+);
