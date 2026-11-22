@@ -24,7 +24,7 @@ pub use memory::{GnaBuffer, gna_allocated_bytes};
 pub use model::{GnaModel, GnaModelBuilder};
 pub use model_export::GnaModelExportConfig;
 pub use process::{
-    GnaProcessInfo, GnaSystemUtilization, detect_gna_processes,
+    GnaProcessInfo, GnaSystemUtilization, detect_gna_pdh_counter_path, detect_gna_processes,
     detect_processes_by_module_patterns, inspect_system_gna_state, is_gna_uncontended,
     query_pdh_counter_double,
 };

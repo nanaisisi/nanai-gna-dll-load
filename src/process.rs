@@ -97,6 +97,24 @@ pub fn is_gna_uncontended() -> Result<bool> {
     Ok(!active.iter().any(|p| p.pid != current_pid))
 }
 
+/// Candidate Windows PDH counter paths for GNA utilization across driver versions.
+const DEFAULT_GNA_PDH_COUNTER_PATHS: &[&str] = &[
+    "\\GPU Engine(*engtype_GNA*)\\Utilization Percentage",
+    "\\Intel(R) GNA\\Utilization",
+    "\\GNA\\Utilization",
+];
+
+/// Probe known Windows PDH counter paths for GNA utilization and return the first
+/// path that yields a valid reading (or `Ok(None)` if none are available).
+pub fn detect_gna_pdh_counter_path() -> Result<Option<String>> {
+    for &path in DEFAULT_GNA_PDH_COUNTER_PATHS {
+        if query_pdh_counter_double(path)?.is_some() {
+            return Ok(Some(path.to_string()));
+        }
+    }
+    Ok(None)
+}
+
 /// Query a Windows PDH performance counter as `f64` (returns `Ok(None)` if the counter
 /// does not exist or on non-Windows platforms).
 pub fn query_pdh_counter_double(counter_path: &str) -> Result<Option<f64>> {
