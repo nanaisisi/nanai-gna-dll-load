@@ -1,3 +1,33 @@
+use std::time::Duration;
+
+/// Hardware profile describing a GNA device's theoretical performance limits.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GnaDeviceProfile {
+    /// Human-readable device or generation name (e.g. "GNA 3.0").
+    pub name: String,
+    /// Maximum hardware clock frequency in Hz.
+    pub max_clock_hz: u64,
+    /// Optional number of MAC / processing units.
+    pub mac_units: Option<u32>,
+}
+
+impl GnaDeviceProfile {
+    /// Create a new device profile with the given name and maximum clock frequency in Hz.
+    pub fn new(name: impl Into<String>, max_clock_hz: u64) -> Self {
+        Self {
+            name: name.into(),
+            max_clock_hz,
+            mac_units: None,
+        }
+    }
+
+    /// Attach the number of MAC / processing units.
+    pub fn with_mac_units(mut self, mac_units: u32) -> Self {
+        self.mac_units = Some(mac_units);
+        self
+    }
+}
+
 /// Detailed performance statistics for a single GNA inference execution.
 #[derive(Debug, Clone, PartialEq)]
 pub struct GnaPerformanceStats {
@@ -65,6 +95,15 @@ impl GnaPerformanceStats {
     /// Percentage representation of hardware utilization (0.0% to 100.0%).
     pub fn hw_usage_percentage(&self) -> f64 {
         self.hw_usage_ratio * 100.0
+    }
+
+    /// Stall ratio in range `[0.0, 1.0]` (`stall_cycles / total_cycles`).
+    pub fn stall_ratio(&self) -> f64 {
+        if self.total_cycles > 0 {
+            (self.stall_cycles as f64) / (self.total_cycles as f64)
+        } else {
+            0.0
+        }
     }
 }
 
@@ -140,6 +179,39 @@ impl GnaUsageMonitor {
     /// Cumulative weighted hardware utilization percentage (0.0% - 100.0%).
     pub fn cumulative_hw_usage_percentage(&self) -> f64 {
         self.cumulative_hw_usage_ratio() * 100.0
+    }
+
+    /// Cumulative stall ratio across all runs (`cumulative_stall / cumulative_total`).
+    pub fn cumulative_stall_ratio(&self) -> f64 {
+        if self.cumulative_total_cycles > 0 {
+            (self.cumulative_stall_cycles as f64) / (self.cumulative_total_cycles as f64)
+        } else {
+            0.0
+        }
+    }
+
+    /// Effective hardware utilization ratio in `[0.0, 1.0]` normalized against the device's
+    /// theoretical maximum cycles (`max_clock_hz * elapsed_secs`).
+    pub fn effective_utilization_ratio(
+        &self,
+        elapsed: Duration,
+        profile: &GnaDeviceProfile,
+    ) -> f64 {
+        let elapsed_secs = elapsed.as_secs_f64();
+        if elapsed_secs <= 0.0 || profile.max_clock_hz == 0 {
+            return 0.0;
+        }
+        let max_cycles = (profile.max_clock_hz as f64) * elapsed_secs;
+        ((self.cumulative_active_cycles as f64) / max_cycles).clamp(0.0, 1.0)
+    }
+
+    /// Effective hardware utilization percentage (`0.0%` to `100.0%`).
+    pub fn effective_utilization_percentage(
+        &self,
+        elapsed: Duration,
+        profile: &GnaDeviceProfile,
+    ) -> f64 {
+        self.effective_utilization_ratio(elapsed, profile) * 100.0
     }
 
     /// Total execution time accumulated across all recorded inferences (in configured unit, e.g. microseconds).

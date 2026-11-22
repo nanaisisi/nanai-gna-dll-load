@@ -7,6 +7,7 @@ pub mod memory;
 pub mod metrics;
 pub mod model;
 pub mod model_export;
+pub mod process;
 pub mod stress;
 pub mod symbol_table;
 pub mod types;
@@ -15,11 +16,17 @@ pub mod types;
 pub use device::GnaDevice;
 pub use error::{GnaError, Result};
 pub use inference::GnaRequestConfig;
-pub use instrumentation::{GnaInstrumentationConfig, GnaPerformanceStats, GnaUsageMonitor};
+pub use instrumentation::{
+    GnaDeviceProfile, GnaInstrumentationConfig, GnaPerformanceStats, GnaUsageMonitor,
+};
 pub use loader::{GnaLibrary, GnaLibraryBuilder};
 pub use memory::GnaBuffer;
 pub use model::{GnaModel, GnaModelBuilder};
 pub use model_export::GnaModelExportConfig;
+pub use process::{
+    GnaProcessInfo, GnaSystemUtilization, detect_gna_processes,
+    detect_processes_by_module_patterns, inspect_system_gna_state, query_pdh_counter_double,
+};
 pub use stress::{GnaLoadTestConfig, GnaLoadTestReport, GnaLoadTester};
 pub use types::*;
 

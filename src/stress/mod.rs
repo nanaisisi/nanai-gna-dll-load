@@ -179,6 +179,24 @@ impl GnaLoadTestReport {
         self.hw_duty_cycle_ratio().map(|ratio| ratio * 100.0)
     }
 
+    /// Effective hardware utilization ratio in `[0.0, 1.0]` normalized against the given
+    /// device profile's maximum clock frequency.
+    pub fn effective_utilization_ratio(
+        &self,
+        profile: &crate::instrumentation::GnaDeviceProfile,
+    ) -> f64 {
+        self.usage_monitor
+            .effective_utilization_ratio(self.elapsed_time, profile)
+    }
+
+    /// Effective hardware utilization percentage (`0.0%` to `100.0%`).
+    pub fn effective_utilization_percentage(
+        &self,
+        profile: &crate::instrumentation::GnaDeviceProfile,
+    ) -> f64 {
+        self.effective_utilization_ratio(profile) * 100.0
+    }
+
     /// Print a formatted summary report to standard output.
     pub fn print_summary(&self) {
         println!("==================================================");
