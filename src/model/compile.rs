@@ -56,52 +56,15 @@ impl GnaModelBuilder {
             operations: operations.as_mut_ptr(),
         };
 
-        println!(
-            "    [DEBUG] Preparing to call Gna2ModelCreate with {} operations",
-            operations.len()
-        );
-        for (op_idx, op) in operations.iter().enumerate() {
-            println!(
-                "    [DEBUG] Op[{}] type: {:?}, operands count: {}, operands ptr: {:p}",
-                op_idx, op.operation_type, op.number_of_operands, op.operands
-            );
-            for i in 0..op.number_of_operands as usize {
-                let tensor_ptr = unsafe { *op.operands.add(i) };
-                println!("      [DEBUG] operand[{}] ptr: {:p}", i, tensor_ptr);
-                if !tensor_ptr.is_null() {
-                    let t = unsafe { &*tensor_ptr };
-                    println!(
-                        "        dims: {}, [{}, {}, {}, ...], mode: {:?}, data_type: {:?}, data: {:p}",
-                        t.shape.number_of_dimensions,
-                        t.shape.dimensions[0],
-                        t.shape.dimensions[1],
-                        t.shape.dimensions[2],
-                        t.mode,
-                        t.data_type,
-                        t.data
-                    );
-                }
-            }
-        }
-
         let mut model_id: u32 = u32::MAX;
-        println!(
-            "    [DEBUG] Invoking model_create on device {}",
-            device.index()
-        );
         let status = unsafe { model_create(device.index(), &model_raw, &mut model_id) };
-        println!("    [DEBUG] model_create returned status {}", status);
 
         if status != GNA2_STATUS_SUCCESS {
             if let Some(status_msg_fn) = library.symbols().status_get_message {
                 let mut sbuf = vec![0 as c_char; 256];
                 let s_res = unsafe { status_msg_fn(status, sbuf.as_mut_ptr(), 256) };
                 if s_res == GNA2_STATUS_SUCCESS {
-                    let c_str = unsafe { std::ffi::CStr::from_ptr(sbuf.as_ptr()) };
-                    println!(
-                        "    [DEBUG] status_get_message: {}",
-                        c_str.to_string_lossy()
-                    );
+                    let _ = unsafe { std::ffi::CStr::from_ptr(sbuf.as_ptr()) };
                 }
             }
             let detail = GnaModel::get_last_error_message(library).unwrap_or_else(|| {

@@ -56,11 +56,6 @@ impl GnaModel {
             return None;
         }
 
-        println!(
-            "    [DEBUG get_last_error_message] status={}, error_desc = {:#?}",
-            status, error_desc
-        );
-
         let mut buf = vec![0 as c_char; max_len as usize];
         let status = unsafe { get_msg(&error_desc, buf.as_mut_ptr(), max_len) };
         if status == GNA2_STATUS_SUCCESS {

@@ -126,16 +126,8 @@ impl GnaDevice {
 
 impl Drop for GnaDevice {
     fn drop(&mut self) {
-        println!(
-            "    [DEBUG GnaDevice::drop] Closing device index {}",
-            self.index
-        );
         unsafe {
-            let status = (self.library.symbols().device_close)(self.index);
-            println!(
-                "    [DEBUG GnaDevice::drop] device_close returned status {}",
-                status
-            );
+            let _ = (self.library.symbols().device_close)(self.index);
         }
     }
 }

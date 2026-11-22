@@ -29,13 +29,12 @@ impl MonitoringApi {
     /// 新しいメトリクスを記録する（例：レイテンシ測定の開始）。
     pub fn start_measurement(&self, key: &str) {
         // 実際のロジックでは、この時点で計測コンテキスト（開始タイムスタンプ）をストアに格納すべきです。
-        println!("Monitoring started for key: {}", key);
+        let _ = key;
     }
 
     /// 測定値を記録し、メトリクスを更新します。戻り値は現在の平均値です。
     pub fn record_measurement(&self, key: &str, value: f64) -> f64 {
         // メトリクスの更新と集計処理を一箇所で行う
-        println!("Recorded measurement: key={}, value={}", key, value);
         self.store.record(key, value)
     }
 }
