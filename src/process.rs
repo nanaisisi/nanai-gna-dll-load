@@ -417,6 +417,14 @@ mod tests {
         assert!(state_invalid.pdh_counter_value.is_none());
     }
 
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn test_query_pdh_counter_double_valid_counter() {
+        let res = query_pdh_counter_double("\\Memory\\Available Bytes").unwrap();
+        assert!(res.is_some());
+        assert!(res.unwrap() > 0.0);
+    }
+
     #[test]
     fn test_detect_processes_empty_patterns() {
         let res = detect_processes_by_module_patterns(&[]).unwrap();
