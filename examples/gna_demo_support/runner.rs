@@ -18,16 +18,10 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
     let weights = vec![1_i16; W * H];
     let inputs = [1_i16; W * B];
     let biases = [0_i32; H];
-    println!("[TRACE] 1. Allocating buffer...");
     let memory = match device.allocate_buffer(64 * 1024) {
         Ok(memory) => memory,
         Err(error) => return eprintln!("Failed to allocate model memory: {error}"),
     };
-    println!(
-        "[TRACE] 2. Buffer allocated at {:p}, size {}",
-        memory.as_raw_ptr(),
-        memory.len()
-    );
 
     let base = memory.as_raw_ptr() as *mut u8;
     let inputs_ptr = base as *mut i16;
@@ -35,14 +29,12 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
     let weights_ptr = unsafe { base.add(8192) } as *mut i16;
     let biases_ptr = unsafe { base.add(16384) } as *mut i32;
 
-    println!("[TRACE] 3. Copying inputs, weights, biases into buffer...");
     unsafe {
         std::ptr::copy_nonoverlapping(inputs.as_ptr(), inputs_ptr, inputs.len());
         std::ptr::copy_nonoverlapping(weights.as_ptr(), weights_ptr, weights.len());
         std::ptr::copy_nonoverlapping(biases.as_ptr(), biases_ptr, biases.len());
         std::ptr::write_bytes(outputs_ptr, 0, H * B);
     }
-    println!("[TRACE] 4. Buffer filled. Building model...");
 
     let model = match GnaModelBuilder::new()
         .add_fully_connected_affine(
@@ -101,7 +93,11 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
     if let Ok(stats) = request.get_performance_stats() {
         println!("Total cycles: {}", stats.total_cycles());
         println!("Stall cycles: {}", stats.stall_cycles());
+        println!("Active cycles: {}", stats.active_cycles());
         println!("HW utilization: {:.2}%", stats.hw_usage_percentage());
+        if let Some(exec_us) = stats.execution_time() {
+            println!("Execution time: {exec_us} us");
+        }
     }
     let results = unsafe { std::slice::from_raw_parts(outputs_ptr, H * B) };
     println!("Inference outputs: {results:?}");

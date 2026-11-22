@@ -28,7 +28,7 @@ pub fn print_usage(program: &str) {
 }
 
 pub fn parse_args() -> Option<DemoOptions> {
-    let mut args = env::args();
+    let mut args = env::args().peekable();
     let program = args.next().unwrap_or_else(|| "gna_demo".to_owned());
     let mut dll_path = None;
     let mut env_var = None;
@@ -55,10 +55,12 @@ pub fn parse_args() -> Option<DemoOptions> {
             },
             "--stress" => {
                 stress = true;
-                iterations = args
-                    .next()
-                    .and_then(|value| value.parse().ok())
-                    .or(Some(1000));
+                if let Some(count) = args.peek().and_then(|value| value.parse::<usize>().ok()) {
+                    let _ = args.next();
+                    iterations = Some(count);
+                } else if iterations.is_none() {
+                    iterations = Some(1000);
+                }
             }
             "--duration" => {
                 stress = true;
