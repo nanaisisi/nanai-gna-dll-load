@@ -4,8 +4,9 @@ use nanai_gna_dll_load::error::GnaError;
 use nanai_gna_dll_load::inference::GnaRequestConfig;
 use nanai_gna_dll_load::instrumentation::GnaInstrumentationConfig;
 use nanai_gna_dll_load::loader::GnaLibrary;
+use nanai_gna_dll_load::memory::GnaBuffer;
 use nanai_gna_dll_load::types::{
-    Gna2AccelerationMode, Gna2DeviceVersion, Gna2InstrumentationPoint,
+    Gna2AccelerationMode, Gna2DeviceVersion, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
 
 use super::mock::{MOCK_STATE, reset_mock_state};
@@ -31,6 +32,10 @@ fn test_request_config_full_lifecycle_and_methods() {
     let buf_ptr = buffer.as_mut_ptr().cast::<c_void>();
     unsafe { cfg.set_operand_buffer(1, 2, buf_ptr) }.expect("set_operand_buffer should succeed");
 
+    let gna_buf = GnaBuffer::new(&lib, 16).expect("GnaBuffer::new should succeed");
+    cfg.set_operand_gna_buffer(1, 2, &gna_buf)
+        .expect("set_operand_gna_buffer should succeed");
+
     cfg.enable_active_list(3, &[0, 2, 5])
         .expect("enable_active_list should succeed");
     cfg.enable_hardware_consistency(Gna2DeviceVersion::V3_0)
@@ -41,6 +46,12 @@ fn test_request_config_full_lifecycle_and_methods() {
         .expect("enable_performance_counter should succeed");
 
     assert!(cfg.instrumentation().is_some());
+    MOCK_STATE.with(|s| {
+        assert_eq!(
+            s.borrow().last_inst_unit,
+            Some((50, Gna2InstrumentationUnit::Microseconds))
+        );
+    });
 
     let req_id = cfg.enqueue().expect("enqueue should succeed");
     assert_eq!(req_id, 100);
@@ -68,7 +79,10 @@ fn test_request_config_full_lifecycle_and_methods() {
     MOCK_STATE.with(|s| {
         let st = s.borrow();
         assert_eq!(st.last_model_id, Some(7));
-        assert_eq!(st.last_operand_buf, Some((10, 1, 2, buf_ptr as usize)));
+        assert_eq!(
+            st.last_operand_buf,
+            Some((10, 1, 2, gna_buf.as_raw_ptr() as usize))
+        );
         assert_eq!(st.last_active_list, Some((10, 3, vec![0, 2, 5])));
         assert_eq!(st.last_hw_consistency, Some((10, Gna2DeviceVersion::V3_0)));
         assert_eq!(

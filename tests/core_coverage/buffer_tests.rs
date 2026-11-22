@@ -150,7 +150,7 @@ fn test_buffer_set_tag_all_branches() {
 
     // Success status
     with_mock_state(|s| s.memory_set_tag_status = GNA2_STATUS_SUCCESS);
-    buf.set_tag(Gna2MemoryTag::Scratch as u32).unwrap();
+    buf.set_memory_tag(Gna2MemoryTag::Scratch).unwrap();
     assert_eq!(
         read_mock_state(|s| s.memory_set_tag_calls.clone()),
         vec![

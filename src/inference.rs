@@ -3,6 +3,7 @@ use std::ffi::c_void;
 use crate::error::{GnaError, Result};
 use crate::instrumentation::{GnaInstrumentationConfig, GnaPerformanceStats};
 use crate::loader::GnaLibrary;
+use crate::memory::GnaBuffer;
 use crate::types::device::{
     GNA2_STATUS_SUCCESS, Gna2AccelerationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
@@ -60,6 +61,16 @@ impl GnaRequestConfig {
             return Err(GnaError::from_status(status));
         }
         Ok(())
+    }
+
+    /// Set a `GnaBuffer` as an operand buffer for this configuration.
+    pub fn set_operand_gna_buffer(
+        &mut self,
+        operation_index: u32,
+        operand_index: u32,
+        buffer: &GnaBuffer,
+    ) -> Result<()> {
+        unsafe { self.set_operand_buffer(operation_index, operand_index, buffer.as_raw_ptr()) }
     }
 
     /// Enable active outputs list for an operation operand.
@@ -171,7 +182,7 @@ impl GnaRequestConfig {
 
     /// Enable performance counters for hardware usage measurement (`HwTotalCycles`, `HwStallCycles`, and `LibExecution`).
     ///
-    /// This automatically creates and assigns a `GnaInstrumentationConfig` with cycle units.
+    /// This automatically creates and assigns a `GnaInstrumentationConfig` with microsecond units for `LibExecution`.
     pub fn enable_performance_counter(&mut self) -> Result<()> {
         let points = [
             Gna2InstrumentationPoint::HwTotalCycles,
@@ -179,7 +190,7 @@ impl GnaRequestConfig {
             Gna2InstrumentationPoint::LibExecution,
         ];
         let mut inst = GnaInstrumentationConfig::create(&self.library, &points)?;
-        let _ = inst.set_unit(Gna2InstrumentationUnit::Cycles);
+        let _ = inst.set_unit(Gna2InstrumentationUnit::Microseconds);
         inst.assign_to_request_config(self.config_id)?;
         self.instrumentation = Some(inst);
         Ok(())

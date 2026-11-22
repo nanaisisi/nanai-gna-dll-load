@@ -39,14 +39,24 @@ unsafe extern "C" fn stub_device_close(_index: u32) -> Gna2Status {
 }
 
 unsafe extern "C" fn stub_memory_alloc(
-    _size: u32,
-    _granted: *mut u32,
-    _addr: *mut *mut c_void,
+    size: u32,
+    granted: *mut u32,
+    addr: *mut *mut c_void,
 ) -> Gna2Status {
+    let mut buf = vec![0u8; size as usize].into_boxed_slice();
+    let ptr = buf.as_mut_ptr().cast::<c_void>();
+    std::mem::forget(buf);
+    if !granted.is_null() {
+        unsafe { *granted = size };
+    }
+    if !addr.is_null() {
+        unsafe { *addr = ptr };
+    }
     GNA2_STATUS_SUCCESS
 }
 
-unsafe extern "C" fn stub_memory_free(_ptr: *mut c_void) -> Gna2Status {
+unsafe extern "C" fn stub_memory_free(ptr: *mut c_void) -> Gna2Status {
+    let _ = ptr;
     GNA2_STATUS_SUCCESS
 }
 
@@ -87,11 +97,12 @@ unsafe extern "C" fn mock_inst_assign(_inst_id: u32, _req_id: u32) -> Gna2Status
     MOCK_STATE.with(|s| s.borrow().inst_assign_status)
 }
 
-unsafe extern "C" fn mock_inst_set_unit(
-    _inst_id: u32,
-    _unit: Gna2InstrumentationUnit,
-) -> Gna2Status {
-    MOCK_STATE.with(|s| s.borrow().inst_set_unit_status)
+unsafe extern "C" fn mock_inst_set_unit(inst_id: u32, unit: Gna2InstrumentationUnit) -> Gna2Status {
+    MOCK_STATE.with(|s| {
+        let mut st = s.borrow_mut();
+        st.last_inst_unit = Some((inst_id, unit));
+        st.inst_set_unit_status
+    })
 }
 
 unsafe extern "C" fn mock_inst_set_mode(

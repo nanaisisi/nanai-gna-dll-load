@@ -2,7 +2,8 @@ use std::cell::RefCell;
 use std::ffi::c_void;
 
 use nanai_gna_dll_load::types::{
-    GNA2_STATUS_SUCCESS, Gna2AccelerationMode, Gna2DeviceVersion, Gna2Status,
+    GNA2_STATUS_SUCCESS, Gna2AccelerationMode, Gna2DeviceVersion, Gna2InstrumentationUnit,
+    Gna2Status,
 };
 
 #[derive(Default)]
@@ -34,6 +35,7 @@ pub(super) struct MockInferenceState {
     pub last_accel_mode: Option<(u32, Gna2AccelerationMode)>,
     pub last_enqueue_config_id: Option<u32>,
     pub last_wait_args: Option<(u32, u32)>,
+    pub last_inst_unit: Option<(u32, Gna2InstrumentationUnit)>,
     pub released_config_ids: Vec<u32>,
     pub released_inst_ids: Vec<u32>,
 }
