@@ -71,45 +71,23 @@ impl GnaLibraryBuilder {
         let mut last_error: Option<String> = None;
 
         for candidate in &self.candidates {
-            match candidate {
-                CandidateSource::DirectPath(path) => {
-                    let resolved = if path.is_dir() {
-                        path.join(default_name)
-                    } else {
-                        path.clone()
-                    };
-
-                    if resolved.exists() {
-                        match GnaLibrary::load_from_path(&resolved) {
-                            Ok(lib) => return Ok(lib),
-                            Err(err) => {
-                                last_error = Some(err.to_string());
-                            }
-                        }
-                    }
-                    tried_paths.push(resolved);
-                }
-                CandidateSource::EnvVar(var_name) => {
-                    if let Some(val) = env::var_os(var_name) {
-                        let path = PathBuf::from(val);
-                        let resolved = if path.is_dir() {
-                            path.join(default_name)
-                        } else {
-                            path
-                        };
-
-                        if resolved.exists() {
-                            match GnaLibrary::load_from_path(&resolved) {
-                                Ok(lib) => return Ok(lib),
-                                Err(err) => {
-                                    last_error = Some(err.to_string());
-                                }
-                            }
-                        }
-                        tried_paths.push(resolved);
+            let raw_path = match candidate {
+                CandidateSource::DirectPath(path) => path.clone(),
+                CandidateSource::EnvVar(var_name) => match env::var_os(var_name) {
+                    Some(val) => PathBuf::from(val),
+                    None => continue,
+                },
+            };
+            let resolved = GnaLibrary::resolve_dll_path(raw_path);
+            if resolved.exists() {
+                match GnaLibrary::load_from_path(&resolved) {
+                    Ok(lib) => return Ok(lib),
+                    Err(err) => {
+                        last_error = Some(err.to_string());
                     }
                 }
             }
+            tried_paths.push(resolved);
         }
 
         // If system fallback is enabled, try loading using OS standard search path

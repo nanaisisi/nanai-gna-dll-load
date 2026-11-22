@@ -76,6 +76,14 @@ impl GnaLibrary {
         })
     }
 
+    pub(super) fn resolve_dll_path(path: PathBuf) -> PathBuf {
+        if path.is_dir() {
+            path.join(Self::default_dll_name())
+        } else {
+            path
+        }
+    }
+
     /// Attempt to load the GNA dynamic library from a path or directory specified by an environment variable.
     ///
     /// If the environment variable points to a file, that file is loaded directly.
@@ -90,13 +98,7 @@ impl GnaLibrary {
         let var_str = var_os.to_string_lossy().into_owned();
 
         let val = env::var_os(var_os).ok_or(GnaError::EnvVarNotSet(var_str))?;
-        let path = PathBuf::from(val);
-
-        let target_path = if path.is_dir() {
-            path.join(Self::default_dll_name())
-        } else {
-            path
-        };
+        let target_path = Self::resolve_dll_path(PathBuf::from(val));
 
         if !target_path.exists() {
             return Err(GnaError::LibraryPathNotFound(target_path));
@@ -153,6 +155,8 @@ impl GnaLibrary {
             return Err(GnaError::from_status(status));
         }
 
+        let last = buf.len() - 1;
+        buf[last] = 0;
         let cstr = unsafe { std::ffi::CStr::from_ptr(buf.as_ptr() as *const std::ffi::c_char) };
         Ok(cstr.to_string_lossy().into_owned())
     }

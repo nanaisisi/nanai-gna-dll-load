@@ -153,7 +153,7 @@ impl GnaInstrumentationConfig {
         if total == 0 {
             return Err(GnaError::Other("HwTotalCycles is zero".into()));
         }
-        Ok((total.saturating_sub(stall) as f64) / (total as f64))
+        Ok(GnaPerformanceStats::from_cycles(total, stall).hw_usage_ratio())
     }
 
     /// Compute detailed performance statistics from instrumentation points and results, AND record key metrics.
