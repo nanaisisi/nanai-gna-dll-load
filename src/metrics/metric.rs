@@ -3,11 +3,11 @@ use jiff::Timestamp;
 /// モニタリングデータ構造。統計情報を追跡するための要素を持ちます。
 #[derive(Debug, Clone)]
 pub struct Metric {
-    pub(crate) last_updated: Timestamp,
+    last_updated: Timestamp,
     // 統計量の追跡に必要なフィールド
-    pub(crate) sum_of_values: f64, // 全計測値の合計 (Sum)
-    pub(crate) count: u64,         // 計測回数 (Count)
-    pub(crate) value: f64,
+    sum_of_values: f64, // 全計測値の合計 (Sum)
+    count: u64,         // 計測回数 (Count)
+    value: f64,
 } // 最後に記録された値
 
 impl Metric {
@@ -18,6 +18,22 @@ impl Metric {
             count: 0,
             value: 0.0,
         }
+    }
+
+    pub(crate) fn from_first_value(value: f64) -> Self {
+        Metric {
+            last_updated: Timestamp::now(),
+            sum_of_values: value,
+            count: 1,
+            value,
+        }
+    }
+
+    pub(crate) fn update(&mut self, new_value: f64) {
+        self.sum_of_values += new_value;
+        self.count += 1;
+        self.value = new_value;
+        self.last_updated = Timestamp::now();
     }
 
     /// 最終更新タイムスタンプを取得します。

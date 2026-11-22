@@ -50,7 +50,7 @@ impl GnaModel {
             .unwrap_or(1024)
             .max(256);
 
-        let mut error_desc = unsafe { std::mem::zeroed::<Gna2ModelError>() };
+        let mut error_desc = Gna2ModelError::default();
         let status = unsafe { get_err(&mut error_desc) };
         if status != GNA2_STATUS_SUCCESS {
             return None;
@@ -59,6 +59,8 @@ impl GnaModel {
         let mut buf = vec![0 as c_char; max_len as usize];
         let status = unsafe { get_msg(&error_desc, buf.as_mut_ptr(), max_len) };
         if status == GNA2_STATUS_SUCCESS {
+            let last = buf.len() - 1;
+            buf[last] = 0;
             let c_str = unsafe { std::ffi::CStr::from_ptr(buf.as_ptr()) };
             Some(c_str.to_string_lossy().into_owned())
         } else {

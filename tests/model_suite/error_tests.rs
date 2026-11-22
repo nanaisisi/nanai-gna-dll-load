@@ -164,6 +164,33 @@ fn test_model_build_create_error_fallbacks() {
         }
         other => panic!("unexpected error: {other:?}"),
     }
+
+    // Subcase C: status_get_message succeeds, model_get_last_error returns unavailable
+    reset_mock_state();
+    MOCK_STATE.with(|s| {
+        let mut state = s.borrow_mut();
+        state.model_create_status = -11;
+        state.status_get_message_status = GNA2_STATUS_SUCCESS;
+        state.status_message = String::from("Device not open");
+        state.get_last_error_status = GNA2_STATUS_MODEL_ERROR_UNAVAILABLE;
+    });
+    let lib_c = GnaLibrary::from_symbol_table(full_mock_symbol_table());
+    let dev_c = GnaDevice::open(&lib_c, 0).expect("open device");
+    let err_c = GnaModelBuilder::new()
+        .add_operation(Gna2Operation::default())
+        .build(&dev_c)
+        .err()
+        .expect("expected ModelCreationError");
+    match err_c {
+        GnaError::ModelCreationError { status, detail } => {
+            assert_eq!(status, -11);
+            assert_eq!(
+                detail,
+                "Failed to compile model on device 0. Status: -11 (Device not open)"
+            );
+        }
+        other => panic!("unexpected error: {other:?}"),
+    }
 }
 
 #[test]

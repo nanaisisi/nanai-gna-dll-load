@@ -1,4 +1,3 @@
-use jiff::Timestamp;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
@@ -21,12 +20,7 @@ impl MetricStore {
     pub fn get_or_init(&self, key: &str) -> Metric {
         let store = self.store.lock().unwrap();
         // 初期化時はSum=0, Count=0で初期化します。
-        store.get(key).cloned().unwrap_or_else(|| Metric {
-            last_updated: Timestamp::now(),
-            sum_of_values: 0.0,
-            count: 0,
-            value: 0.0,
-        })
+        store.get(key).cloned().unwrap_or_else(Metric::new)
     }
 
     /// メトリクスを記録し、その時点での平均値を返します。計測ロジックの唯一のエントリーポイントです。
@@ -34,20 +28,10 @@ impl MetricStore {
         let mut store = self.store.lock().unwrap();
         let metric = store
             .entry(key.to_string())
-            .and_modify(|m| {
-                m.sum_of_values += new_value;
-                m.count += 1;
-                m.value = new_value;
-                m.last_updated = Timestamp::now();
-            })
-            .or_insert_with(|| Metric {
-                last_updated: Timestamp::now(),
-                sum_of_values: new_value,
-                count: 1,
-                value: new_value,
-            });
+            .and_modify(|m| m.update(new_value))
+            .or_insert_with(|| Metric::from_first_value(new_value));
 
-        metric.sum_of_values / (metric.count as f64)
+        metric.sum_of_values() / (metric.count() as f64)
     }
 
     /// 指定されたキーの最新メトリクス（平均値を含む）を取得します。

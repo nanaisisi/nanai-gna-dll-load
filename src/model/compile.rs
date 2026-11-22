@@ -60,20 +60,30 @@ impl GnaModelBuilder {
         let status = unsafe { model_create(device.index(), &model_raw, &mut model_id) };
 
         if status != GNA2_STATUS_SUCCESS {
+            let mut status_msg = None;
             if let Some(status_msg_fn) = library.symbols().status_get_message {
                 let mut sbuf = vec![0 as c_char; 256];
                 let s_res = unsafe { status_msg_fn(status, sbuf.as_mut_ptr(), 256) };
                 if s_res == GNA2_STATUS_SUCCESS {
-                    let _ = unsafe { std::ffi::CStr::from_ptr(sbuf.as_ptr()) };
+                    sbuf[255] = 0;
+                    let c_str = unsafe { std::ffi::CStr::from_ptr(sbuf.as_ptr()) };
+                    status_msg = Some(c_str.to_string_lossy().into_owned());
                 }
             }
-            let detail = GnaModel::get_last_error_message(library).unwrap_or_else(|| {
-                format!(
-                    "Failed to compile model on device {}. Status: {}",
-                    device.index(),
-                    status
-                )
-            });
+            let detail =
+                GnaModel::get_last_error_message(library).unwrap_or_else(|| match status_msg {
+                    Some(msg) => format!(
+                        "Failed to compile model on device {}. Status: {} ({})",
+                        device.index(),
+                        status,
+                        msg
+                    ),
+                    None => format!(
+                        "Failed to compile model on device {}. Status: {}",
+                        device.index(),
+                        status
+                    ),
+                });
             return Err(GnaError::ModelCreationError { status, detail });
         }
 
