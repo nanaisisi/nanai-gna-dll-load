@@ -13,6 +13,9 @@ pub struct GnaDevice {
     version: Gna2DeviceVersion,
 }
 
+unsafe impl Send for GnaDevice {}
+unsafe impl Sync for GnaDevice {}
+
 impl GnaDevice {
     /// Query the number of available GNA devices in the system.
     pub fn get_count(library: &GnaLibrary) -> Result<u32> {

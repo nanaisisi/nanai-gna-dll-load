@@ -167,4 +167,67 @@ impl GnaLoadTester {
             usage_monitor: stats.usage_monitor,
         })
     }
+
+    /// Run a self-contained 64x64 dummy FCA workload on `device` with `config`.
+    pub fn run_default_workload(
+        device: &crate::device::GnaDevice,
+        config: GnaLoadTestConfig,
+    ) -> Result<GnaLoadTestReport> {
+        const W: usize = 64;
+        const H: usize = 64;
+
+        let weights_bytes = W * H * std::mem::size_of::<i16>();
+        let inputs_bytes = W * std::mem::size_of::<i16>();
+        let biases_bytes = H * std::mem::size_of::<i32>();
+        let outputs_bytes = H * std::mem::size_of::<i32>();
+
+        let mut buf =
+            device.allocate_buffer(weights_bytes + inputs_bytes + biases_bytes + outputs_bytes)?;
+        buf.as_mut_slice().fill(0);
+
+        let base = buf.as_raw_ptr() as *mut u8;
+        let weights_ptr = base as *mut std::ffi::c_void;
+        let inputs_ptr = unsafe { base.add(weights_bytes) } as *mut std::ffi::c_void;
+        let biases_ptr = unsafe { base.add(weights_bytes + inputs_bytes) } as *mut std::ffi::c_void;
+        let outputs_ptr = unsafe { base.add(weights_bytes + inputs_bytes + biases_bytes) }
+            as *mut std::ffi::c_void;
+
+        let model = crate::model::GnaModelBuilder::new()
+            .add_fully_connected_affine(
+                crate::types::Gna2Tensor::d2(
+                    W as u32,
+                    1,
+                    crate::types::Gna2DataType::Int16,
+                    inputs_ptr,
+                ),
+                crate::types::Gna2Tensor::d2(
+                    H as u32,
+                    1,
+                    crate::types::Gna2DataType::Int32,
+                    outputs_ptr,
+                ),
+                crate::types::Gna2Tensor::d2(
+                    H as u32,
+                    W as u32,
+                    crate::types::Gna2DataType::Int16,
+                    weights_ptr,
+                ),
+                crate::types::Gna2Tensor::d1(
+                    H as u32,
+                    crate::types::Gna2DataType::Int32,
+                    biases_ptr,
+                ),
+                None,
+            )
+            .build(device)?;
+
+        let mut request = crate::inference::GnaRequestConfig::create(device.library(), model.id())?;
+        unsafe {
+            request.set_operand_buffer(0, 0, inputs_ptr)?;
+            request.set_operand_buffer(0, 1, outputs_ptr)?;
+        }
+        let _ = request.set_acceleration_mode(crate::types::Gna2AccelerationMode::Auto);
+
+        Self::new(config).run(&mut request)
+    }
 }
