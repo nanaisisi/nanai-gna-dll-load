@@ -1,38 +1,17 @@
 mod builder;
+mod compile;
+mod layer;
 
 pub use builder::*;
+use layer::*;
 
 #[cfg(test)]
 mod tests;
 
-use std::ffi::{c_char, c_void};
-use std::ptr;
+use std::ffi::c_char;
 
-use crate::error::{GnaError, Result};
 use crate::loader::GnaLibrary;
-use crate::symbol_table::FnGna2OperationInitFullyConnectedAffine;
-use crate::types::{
-    GNA2_STATUS_SUCCESS, Gna2ModelError, Gna2Operation, Gna2OperationType, Gna2Tensor,
-    Gna2UserAllocator,
-};
-
-#[link(name = "kernel32")]
-unsafe extern "system" {
-    fn GetProcessHeap() -> *mut c_void;
-    fn HeapAlloc(hHeap: *mut c_void, dwFlags: u32, dwBytes: usize) -> *mut c_void;
-}
-
-/// Custom allocator matching C ABI `void* (*Gna2UserAllocator)(uint32_t size)`
-unsafe extern "C" fn rust_gna2_user_allocator(size: u32) -> *mut c_void {
-    if size == 0 {
-        return ptr::null_mut();
-    }
-    unsafe {
-        let heap = GetProcessHeap();
-        // HEAP_ZERO_MEMORY = 0x00000008
-        HeapAlloc(heap, 0x00000008, size as usize)
-    }
-}
+use crate::types::{GNA2_STATUS_SUCCESS, Gna2ModelError};
 
 /// RAII wrapper for a compiled GNA Model handle (`model_id`).
 ///
@@ -103,78 +82,4 @@ impl Drop for GnaModel {
             }
         }
     }
-}
-
-struct FullyConnectedAffineLayer {
-    input: Gna2Tensor,
-    output: Gna2Tensor,
-    weights: Gna2Tensor,
-    biases: Gna2Tensor,
-    activation: Gna2Tensor,
-}
-
-/// Layer operation definition for constructing a GNA data-flow model.
-enum LayerDefinition {
-    FullyConnectedAffine(Box<FullyConnectedAffineLayer>),
-    Raw(Gna2Operation),
-}
-
-/// Allocate and populate the 5-operand pointer table for a fully connected affine layer.
-unsafe fn allocate_fca_operands(
-    allocator: Gna2UserAllocator,
-    fca: &FullyConnectedAffineLayer,
-) -> Result<*mut *const Gna2Tensor> {
-    let size = (5 * std::mem::size_of::<*const Gna2Tensor>()) as u32;
-    let mem = unsafe { allocator(size) } as *mut *const Gna2Tensor;
-    if mem.is_null() {
-        return Err(GnaError::NullPointer);
-    }
-    unsafe {
-        *mem.add(0) = &fca.input as *const Gna2Tensor;
-        *mem.add(1) = &fca.output as *const Gna2Tensor;
-        *mem.add(2) = &fca.weights as *const Gna2Tensor;
-        *mem.add(3) = &fca.biases as *const Gna2Tensor;
-        *mem.add(4) = &fca.activation as *const Gna2Tensor;
-    }
-    Ok(mem)
-}
-
-/// Initialize a fully connected affine operation using the library's helper symbol.
-fn init_fca_via_symbol(
-    fca_init: FnGna2OperationInitFullyConnectedAffine,
-    allocator: Gna2UserAllocator,
-    fca: &mut FullyConnectedAffineLayer,
-) -> Result<Gna2Operation> {
-    let mut op = Gna2Operation::default();
-    let status = unsafe {
-        fca_init(
-            &mut op,
-            allocator,
-            &mut fca.input as *mut Gna2Tensor,
-            &mut fca.output as *mut Gna2Tensor,
-            &mut fca.weights as *mut Gna2Tensor,
-            &mut fca.biases as *mut Gna2Tensor,
-            &mut fca.activation as *mut Gna2Tensor,
-        )
-    };
-    if status != GNA2_STATUS_SUCCESS {
-        return Err(GnaError::from_status(status));
-    }
-    Ok(op)
-}
-
-/// Manually initialize a fully connected affine operation when the helper symbol is absent.
-fn init_fca_manual(
-    allocator: Gna2UserAllocator,
-    fca: &FullyConnectedAffineLayer,
-) -> Result<Gna2Operation> {
-    // Allocate operands pointer table (5 operands: input, output, weights, biases, activation)
-    let buf = unsafe { allocate_fca_operands(allocator, fca) }?;
-    Ok(Gna2Operation {
-        operation_type: Gna2OperationType::FullyConnectedAffine,
-        operands: buf,
-        number_of_operands: 5,
-        parameters: ptr::null_mut(),
-        number_of_parameters: 0,
-    })
 }

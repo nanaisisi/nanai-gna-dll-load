@@ -1,6 +1,10 @@
+use std::ffi::c_void;
+use std::ptr;
+
 use super::*;
 use crate::device::GnaDevice;
-use crate::types::{Gna2DeviceVersion, Gna2Model, Gna2Status};
+use crate::error::GnaError;
+use crate::types::{Gna2DeviceVersion, Gna2Model, Gna2Status, Gna2Tensor};
 
 unsafe extern "C" fn null_allocator(_size: u32) -> *mut c_void {
     ptr::null_mut()
