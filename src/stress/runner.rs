@@ -73,6 +73,17 @@ impl GnaLoadTester {
 
     /// Run the load test using the provided configured request.
     pub fn run(&self, request_config: &mut GnaRequestConfig) -> Result<GnaLoadTestReport> {
+        let never = std::sync::atomic::AtomicBool::new(false);
+        self.run_with_cancel(request_config, &never)
+    }
+
+    /// Run the load test, stopping early if `cancel` becomes `true`.
+    pub fn run_with_cancel(
+        &self,
+        request_config: &mut GnaRequestConfig,
+        cancel: &std::sync::atomic::AtomicBool,
+    ) -> Result<GnaLoadTestReport> {
+        use std::sync::atomic::Ordering;
         if self.config.track_hw_usage && request_config.instrumentation().is_none() {
             let _ = request_config.enable_performance_counter();
         }
@@ -88,7 +99,7 @@ impl GnaLoadTester {
 
         let start_time = Instant::now();
 
-        while stats.completed + stats.failed < max_iterations {
+        while !cancel.load(Ordering::Relaxed) && stats.completed + stats.failed < max_iterations {
             if let Some(dur) = max_duration
                 && start_time.elapsed() >= dur
             {
@@ -173,6 +184,17 @@ impl GnaLoadTester {
         device: &crate::device::GnaDevice,
         config: GnaLoadTestConfig,
     ) -> Result<GnaLoadTestReport> {
+        let never = std::sync::atomic::AtomicBool::new(false);
+        Self::run_default_workload_with_cancel(device, config, &never)
+    }
+
+    /// Run a self-contained 64x64 dummy FCA workload on `device` with `config`,
+    /// stopping early if `cancel` becomes `true`.
+    pub fn run_default_workload_with_cancel(
+        device: &crate::device::GnaDevice,
+        config: GnaLoadTestConfig,
+        cancel: &std::sync::atomic::AtomicBool,
+    ) -> Result<GnaLoadTestReport> {
         const W: usize = 64;
         const H: usize = 64;
 
@@ -228,6 +250,6 @@ impl GnaLoadTester {
         }
         let _ = request.set_acceleration_mode(crate::types::Gna2AccelerationMode::Auto);
 
-        Self::new(config).run(&mut request)
+        Self::new(config).run_with_cancel(&mut request, cancel)
     }
 }
