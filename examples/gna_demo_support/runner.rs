@@ -1,4 +1,4 @@
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use nanai_gna_dll_load::{
     device::GnaDevice,
@@ -82,6 +82,7 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
     if let Err(error) = request.enable_performance_counter() {
         println!("Performance counter unavailable: {error}");
     }
+    let wall_start = Instant::now();
     let request_id = match request.enqueue() {
         Ok(request_id) => request_id,
         Err(error) => return eprintln!("Enqueue failed: {error}"),
@@ -90,13 +91,15 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
         Ok(()) => println!("Inference request completed successfully!"),
         Err(error) => return eprintln!("Inference failed / timed out: {error}"),
     }
+    let wall_elapsed_us = wall_start.elapsed().as_micros();
+    println!("Wall-clock execution time: {wall_elapsed_us} us");
     if let Ok(stats) = request.get_performance_stats() {
         println!("Total cycles: {}", stats.total_cycles());
         println!("Stall cycles: {}", stats.stall_cycles());
         println!("Active cycles: {}", stats.active_cycles());
         println!("HW utilization: {:.2}%", stats.hw_usage_percentage());
         if let Some(exec_us) = stats.execution_time() {
-            println!("Execution time: {exec_us} us");
+            println!("LibExecution raw value: {exec_us} us");
         }
     }
     let results = unsafe { std::slice::from_raw_parts(outputs_ptr, H * B) };
