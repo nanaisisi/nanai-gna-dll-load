@@ -85,6 +85,8 @@ unsafe extern "C" fn mock_inst_config_create(
                     Gna2InstrumentationPoint::HwTotalCycles => st.mock_total_cycles,
                     Gna2InstrumentationPoint::HwStallCycles => st.mock_stall_cycles,
                     Gna2InstrumentationPoint::LibExecution => st.mock_exec_time,
+                    Gna2InstrumentationPoint::LibSubmission => 100,
+                    Gna2InstrumentationPoint::LibCompletion => 100 + st.mock_exec_time,
                     _ => 0,
                 };
             }

@@ -25,7 +25,8 @@ pub use model::{GnaModel, GnaModelBuilder};
 pub use model_export::GnaModelExportConfig;
 pub use process::{
     GnaProcessInfo, GnaSystemUtilization, detect_gna_processes,
-    detect_processes_by_module_patterns, inspect_system_gna_state, query_pdh_counter_double,
+    detect_processes_by_module_patterns, inspect_system_gna_state, is_gna_uncontended,
+    query_pdh_counter_double,
 };
 pub use stress::{GnaLoadTestConfig, GnaLoadTestReport, GnaLoadTester};
 pub use types::*;

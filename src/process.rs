@@ -53,6 +53,16 @@ pub fn inspect_system_gna_state(pdh_counter_path: Option<&str>) -> Result<GnaSys
     })
 }
 
+/// Returns `true` if no external process currently has a GNA runtime library loaded.
+///
+/// Intended as a lightweight check for upper-layer schedulers deciding whether to
+/// dispatch work to GNA or route it to another backend (e.g. CPU).
+pub fn is_gna_uncontended() -> Result<bool> {
+    let current_pid = std::process::id();
+    let active = detect_gna_processes()?;
+    Ok(!active.iter().any(|p| p.pid != current_pid))
+}
+
 /// Query a Windows PDH performance counter as `f64` (returns `Ok(None)` if the counter
 /// does not exist or on non-Windows platforms).
 pub fn query_pdh_counter_double(counter_path: &str) -> Result<Option<f64>> {

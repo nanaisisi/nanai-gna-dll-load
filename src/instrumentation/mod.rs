@@ -127,14 +127,22 @@ impl GnaInstrumentationConfig {
         let mut total = None;
         let mut stall = None;
         let mut exec_time = None;
+        let mut lib_submission = None;
+        let mut lib_completion = None;
 
         for (&pt, &val) in self.points.iter().zip(self.results.iter()) {
             match pt {
                 Gna2InstrumentationPoint::HwTotalCycles => total = Some(val),
                 Gna2InstrumentationPoint::HwStallCycles => stall = Some(val),
                 Gna2InstrumentationPoint::LibExecution => exec_time = Some(val),
+                Gna2InstrumentationPoint::LibSubmission => lib_submission = Some(val),
+                Gna2InstrumentationPoint::LibCompletion => lib_completion = Some(val),
                 _ => {}
             }
+        }
+
+        if let (Some(sub), Some(comp)) = (lib_submission, lib_completion) {
+            exec_time = Some(comp.saturating_sub(sub));
         }
 
         let total_cycles = total

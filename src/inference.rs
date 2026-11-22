@@ -187,7 +187,8 @@ impl GnaRequestConfig {
         let points = [
             Gna2InstrumentationPoint::HwTotalCycles,
             Gna2InstrumentationPoint::HwStallCycles,
-            Gna2InstrumentationPoint::LibExecution,
+            Gna2InstrumentationPoint::LibSubmission,
+            Gna2InstrumentationPoint::LibCompletion,
         ];
         let mut inst = GnaInstrumentationConfig::create(&self.library, &points)?;
         let _ = inst.set_unit(Gna2InstrumentationUnit::Microseconds);
