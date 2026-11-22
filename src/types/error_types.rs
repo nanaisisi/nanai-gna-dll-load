@@ -2,7 +2,7 @@ use super::GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES;
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Gna2ItemType(pub i32);
+pub struct Gna2ItemType(pub(crate) i32);
 
 impl Gna2ItemType {
     pub const NONE: Self = Self(-1);
@@ -22,22 +22,93 @@ impl Gna2ItemType {
     pub const SHAPE_DIMENSIONS: Self = Self(14);
     pub const INTERNAL: Self = Self(15);
     pub const OPERATION_HARDWARE_DESCRIPTOR: Self = Self(16);
+
+    pub const fn new(raw: i32) -> Self {
+        Self(raw)
+    }
+
+    pub const fn raw(&self) -> i32 {
+        self.0
+    }
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Gna2ModelItem {
-    pub item_type: Gna2ItemType,
-    pub operation_index: i32,
-    pub operand_index: i32,
-    pub parameter_index: i32,
-    pub shape_dimension_index: i32,
-    pub properties: [i32; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES],
+    pub(crate) item_type: Gna2ItemType,
+    pub(crate) operation_index: i32,
+    pub(crate) operand_index: i32,
+    pub(crate) parameter_index: i32,
+    pub(crate) shape_dimension_index: i32,
+    pub(crate) properties: [i32; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES],
+}
+
+impl Gna2ModelItem {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub const fn with_item_type(mut self, item_type: Gna2ItemType) -> Self {
+        self.item_type = item_type;
+        self
+    }
+
+    pub const fn with_operation_index(mut self, operation_index: i32) -> Self {
+        self.operation_index = operation_index;
+        self
+    }
+
+    pub const fn with_operand_index(mut self, operand_index: i32) -> Self {
+        self.operand_index = operand_index;
+        self
+    }
+
+    pub const fn with_parameter_index(mut self, parameter_index: i32) -> Self {
+        self.parameter_index = parameter_index;
+        self
+    }
+
+    pub const fn with_shape_dimension_index(mut self, shape_dimension_index: i32) -> Self {
+        self.shape_dimension_index = shape_dimension_index;
+        self
+    }
+
+    pub const fn with_properties(
+        mut self,
+        properties: [i32; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES],
+    ) -> Self {
+        self.properties = properties;
+        self
+    }
+
+    pub const fn item_type(&self) -> Gna2ItemType {
+        self.item_type
+    }
+
+    pub const fn operation_index(&self) -> i32 {
+        self.operation_index
+    }
+
+    pub const fn operand_index(&self) -> i32 {
+        self.operand_index
+    }
+
+    pub const fn parameter_index(&self) -> i32 {
+        self.parameter_index
+    }
+
+    pub const fn shape_dimension_index(&self) -> i32 {
+        self.shape_dimension_index
+    }
+
+    pub const fn properties(&self) -> &[i32; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES] {
+        &self.properties
+    }
 }
 
 #[repr(transparent)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Gna2ErrorType(pub i32);
+pub struct Gna2ErrorType(pub(crate) i32);
 
 impl Gna2ErrorType {
     pub const NONE: Self = Self(0);
@@ -60,12 +131,42 @@ impl Gna2ErrorType {
     pub const RUNTIME: Self = Self(-17);
     pub const NO_HARDWARE_COMPLIANT_OPERATION: Self = Self(-18);
     pub const OTHER: Self = Self(-19);
+
+    pub const fn new(raw: i32) -> Self {
+        Self(raw)
+    }
+
+    pub const fn raw(&self) -> i32 {
+        self.0
+    }
 }
 
 #[repr(C)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct Gna2ModelError {
-    pub source: Gna2ModelItem,
-    pub reason: Gna2ErrorType,
-    pub value: i64,
+    pub(crate) source: Gna2ModelItem,
+    pub(crate) reason: Gna2ErrorType,
+    pub(crate) value: i64,
+}
+
+impl Gna2ModelError {
+    pub const fn new(source: Gna2ModelItem, reason: Gna2ErrorType, value: i64) -> Self {
+        Self {
+            source,
+            reason,
+            value,
+        }
+    }
+
+    pub const fn source(&self) -> &Gna2ModelItem {
+        &self.source
+    }
+
+    pub const fn reason(&self) -> Gna2ErrorType {
+        self.reason
+    }
+
+    pub const fn value(&self) -> i64 {
+        self.value
+    }
 }

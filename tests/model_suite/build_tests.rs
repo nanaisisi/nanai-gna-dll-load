@@ -93,21 +93,10 @@ fn test_model_build_manual_fca_fallback_and_raw_operations() {
     let raw_tensor = Gna2Tensor::d1(4, Gna2DataType::Int8, in_buf.as_mut_ptr() as *mut c_void);
     let raw_operands: [*const Gna2Tensor; 2] = [&raw_tensor as *const Gna2Tensor, ptr::null()];
 
-    let raw_copy_op = Gna2Operation {
-        operation_type: Gna2OperationType::Copy,
-        operands: raw_operands.as_ptr(),
-        number_of_operands: 2,
-        parameters: ptr::null_mut(),
-        number_of_parameters: 0,
-    };
+    let raw_copy_op =
+        Gna2Operation::new(Gna2OperationType::Copy).with_operands(raw_operands.as_ptr(), 2);
 
-    let raw_empty_op = Gna2Operation {
-        operation_type: Gna2OperationType::Convolution,
-        operands: ptr::null(),
-        number_of_operands: 0,
-        parameters: ptr::null_mut(),
-        number_of_parameters: 0,
-    };
+    let raw_empty_op = Gna2Operation::new(Gna2OperationType::Convolution);
 
     MOCK_STATE.with(|s| {
         let mut state = s.borrow_mut();
@@ -159,13 +148,7 @@ fn test_model_drop_without_release_symbol() {
     let library = GnaLibrary::from_symbol_table(symbols);
     let device = GnaDevice::open(&library, 0).expect("open device");
 
-    let op = Gna2Operation {
-        operation_type: Gna2OperationType::Transposition,
-        operands: ptr::null(),
-        number_of_operands: 0,
-        parameters: ptr::null_mut(),
-        number_of_parameters: 0,
-    };
+    let op = Gna2Operation::new(Gna2OperationType::Transposition);
 
     let model = GnaModelBuilder::default()
         .add_operation(op)

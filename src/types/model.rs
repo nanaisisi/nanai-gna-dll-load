@@ -73,8 +73,8 @@ pub enum Gna2BiasMode {
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Gna2Shape {
-    pub number_of_dimensions: u32,
-    pub dimensions: [u32; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
+    pub(crate) number_of_dimensions: u32,
+    pub(crate) dimensions: [u32; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
 }
 
 impl Default for Gna2Shape {
@@ -87,6 +87,14 @@ impl Default for Gna2Shape {
 }
 
 impl Gna2Shape {
+    pub const fn number_of_dimensions(&self) -> u32 {
+        self.number_of_dimensions
+    }
+
+    pub const fn dimensions(&self) -> &[u32; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS] {
+        &self.dimensions
+    }
+
     pub fn scalar() -> Self {
         Self::default()
     }
@@ -128,11 +136,11 @@ impl Gna2Shape {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Gna2Tensor {
-    pub shape: Gna2Shape,
-    pub mode: Gna2TensorMode,
-    pub layout: [std::ffi::c_char; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
-    pub data_type: Gna2DataType,
-    pub data: *mut std::ffi::c_void,
+    pub(crate) shape: Gna2Shape,
+    pub(crate) mode: Gna2TensorMode,
+    pub(crate) layout: [std::ffi::c_char; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
+    pub(crate) data_type: Gna2DataType,
+    pub(crate) data: *mut std::ffi::c_void,
 }
 
 impl Default for Gna2Tensor {
@@ -148,6 +156,26 @@ impl Default for Gna2Tensor {
 }
 
 impl Gna2Tensor {
+    pub const fn shape(&self) -> &Gna2Shape {
+        &self.shape
+    }
+
+    pub const fn mode(&self) -> Gna2TensorMode {
+        self.mode
+    }
+
+    pub const fn layout(&self) -> &[std::ffi::c_char; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS] {
+        &self.layout
+    }
+
+    pub const fn data_type(&self) -> Gna2DataType {
+        self.data_type
+    }
+
+    pub const fn data(&self) -> *mut std::ffi::c_void {
+        self.data
+    }
+
     pub fn disabled() -> Self {
         Self {
             shape: Gna2Shape::default(),
@@ -182,11 +210,11 @@ impl Gna2Tensor {
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Gna2Operation {
-    pub operation_type: Gna2OperationType,
-    pub operands: *const *const Gna2Tensor,
-    pub number_of_operands: u32,
-    pub parameters: *mut *mut std::ffi::c_void,
-    pub number_of_parameters: u32,
+    pub(crate) operation_type: Gna2OperationType,
+    pub(crate) operands: *const *const Gna2Tensor,
+    pub(crate) number_of_operands: u32,
+    pub(crate) parameters: *mut *mut std::ffi::c_void,
+    pub(crate) number_of_parameters: u32,
 }
 
 impl Default for Gna2Operation {
@@ -201,9 +229,75 @@ impl Default for Gna2Operation {
     }
 }
 
+impl Gna2Operation {
+    pub fn new(operation_type: Gna2OperationType) -> Self {
+        Self {
+            operation_type,
+            ..Self::default()
+        }
+    }
+
+    pub fn with_operands(
+        mut self,
+        operands: *const *const Gna2Tensor,
+        number_of_operands: u32,
+    ) -> Self {
+        self.operands = operands;
+        self.number_of_operands = number_of_operands;
+        self
+    }
+
+    pub fn with_parameters(
+        mut self,
+        parameters: *mut *mut std::ffi::c_void,
+        number_of_parameters: u32,
+    ) -> Self {
+        self.parameters = parameters;
+        self.number_of_parameters = number_of_parameters;
+        self
+    }
+
+    pub const fn operation_type(&self) -> Gna2OperationType {
+        self.operation_type
+    }
+
+    pub const fn operands(&self) -> *const *const Gna2Tensor {
+        self.operands
+    }
+
+    pub const fn number_of_operands(&self) -> u32 {
+        self.number_of_operands
+    }
+
+    pub const fn parameters(&self) -> *mut *mut std::ffi::c_void {
+        self.parameters
+    }
+
+    pub const fn number_of_parameters(&self) -> u32 {
+        self.number_of_parameters
+    }
+}
+
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Gna2Model {
-    pub number_of_operations: u32,
-    pub operations: *mut Gna2Operation,
+    pub(crate) number_of_operations: u32,
+    pub(crate) operations: *mut Gna2Operation,
+}
+
+impl Gna2Model {
+    pub const fn new(number_of_operations: u32, operations: *mut Gna2Operation) -> Self {
+        Self {
+            number_of_operations,
+            operations,
+        }
+    }
+
+    pub const fn number_of_operations(&self) -> u32 {
+        self.number_of_operations
+    }
+
+    pub const fn operations(&self) -> *mut Gna2Operation {
+        self.operations
+    }
 }

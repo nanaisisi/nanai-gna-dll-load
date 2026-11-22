@@ -1,11 +1,9 @@
 use std::cell::RefCell;
 use std::ffi::c_void;
-use std::ptr;
 
 use nanai_gna_dll_load::types::{
-    GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES, GNA2_STATUS_SUCCESS, Gna2ErrorType, Gna2ItemType,
-    Gna2Model, Gna2ModelError, Gna2ModelItem, Gna2Operation, Gna2OperationType, Gna2Status,
-    Gna2Tensor, Gna2TensorMode, Gna2UserAllocator,
+    GNA2_STATUS_SUCCESS, Gna2ErrorType, Gna2Model, Gna2ModelError, Gna2ModelItem, Gna2Operation,
+    Gna2OperationType, Gna2Status, Gna2Tensor, Gna2TensorMode, Gna2UserAllocator,
 };
 
 #[link(name = "kernel32")]
@@ -71,18 +69,11 @@ impl Default for MockModelState {
             fca_allocator_zero_was_null: false,
             fca_allocator_nonzero_was_nonnull: false,
             get_last_error_status: GNA2_STATUS_SUCCESS,
-            last_error_desc: Gna2ModelError {
-                source: Gna2ModelItem {
-                    item_type: Gna2ItemType::SHAPE_DIMENSIONS,
-                    operation_index: 0,
-                    operand_index: 2,
-                    parameter_index: -1,
-                    shape_dimension_index: 1,
-                    properties: [0; GNA2_MODEL_ITEM_NUMBER_OF_PROPERTIES],
-                },
-                reason: Gna2ErrorType::BELOW_RANGE,
-                value: 123,
-            },
+            last_error_desc: Gna2ModelError::new(
+                Gna2ModelItem::new(),
+                Gna2ErrorType::BELOW_RANGE,
+                123,
+            ),
             error_get_message_status: GNA2_STATUS_SUCCESS,
             error_message: String::from("Mock model error"),
             max_error_message_len: 512,
@@ -166,11 +157,8 @@ pub(super) unsafe extern "C" fn mock_operation_init_fully_connected_affine(
         *mem.add(4) = activation as *const Gna2Tensor;
 
         if !operation.is_null() {
-            (*operation).operation_type = Gna2OperationType::FullyConnectedAffine;
-            (*operation).operands = mem;
-            (*operation).number_of_operands = 5;
-            (*operation).parameters = ptr::null_mut();
-            (*operation).number_of_parameters = 0;
+            *operation =
+                Gna2Operation::new(Gna2OperationType::FullyConnectedAffine).with_operands(mem, 5);
         }
     }
 
@@ -191,27 +179,27 @@ pub(super) unsafe extern "C" fn mock_model_create(
 
         if !model.is_null() {
             let m = unsafe { &*model };
-            state.last_num_operations = m.number_of_operations;
-            for i in 0..m.number_of_operations as usize {
-                let op = unsafe { &*m.operations.add(i) };
-                state.observed_op_types.push(op.operation_type);
-                state.observed_operand_counts.push(op.number_of_operands);
-                if i == 0 && !op.operands.is_null() {
-                    for j in 0..op.number_of_operands as usize {
-                        let t_ptr = unsafe { *op.operands.add(j) };
+            state.last_num_operations = m.number_of_operations();
+            for i in 0..m.number_of_operations() as usize {
+                let op = unsafe { &*m.operations().add(i) };
+                state.observed_op_types.push(op.operation_type());
+                state.observed_operand_counts.push(op.number_of_operands());
+                if i == 0 && !op.operands().is_null() {
+                    for j in 0..op.number_of_operands() as usize {
+                        let t_ptr = unsafe { *op.operands().add(j) };
                         if !t_ptr.is_null() {
-                            let mode = unsafe { (*t_ptr).mode };
+                            let mode = unsafe { (*t_ptr).mode() };
                             state.observed_first_layer_tensor_modes.push(mode);
                         }
                     }
                 }
-                if !op.operands.is_null() {
-                    let addr = op.operands as usize;
+                if !op.operands().is_null() {
+                    let addr = op.operands() as usize;
                     if let Some(pos) = state.heap_allocated_ptrs.iter().position(|&p| p == addr) {
                         state.heap_allocated_ptrs.remove(pos);
                         ptrs_to_free.push(addr);
                     } else if state.free_fallback_fca_operands
-                        && op.operation_type == Gna2OperationType::FullyConnectedAffine
+                        && op.operation_type() == Gna2OperationType::FullyConnectedAffine
                         && !state.raw_operand_ptrs.contains(&addr)
                     {
                         state.freed_fallback_fca_operands_calls += 1;

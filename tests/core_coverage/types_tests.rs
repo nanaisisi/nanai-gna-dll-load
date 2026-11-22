@@ -61,70 +61,93 @@ fn test_data_type_size_in_bytes_all_variants() {
 fn test_shape_tensor_operation_defaults_and_constructors() {
     let scalar = Gna2Shape::scalar();
     assert_eq!(scalar, Gna2Shape::default());
-    assert_eq!(scalar.number_of_dimensions, 0);
+    assert_eq!(scalar.number_of_dimensions(), 0);
+    assert_eq!(scalar.dimensions(), &[0; 8]);
     assert_eq!(scalar.total_elements(), 1);
 
     let s1 = Gna2Shape::d1(16);
-    assert_eq!(s1.number_of_dimensions, 1);
-    assert_eq!(s1.dimensions[0], 16);
+    assert_eq!(s1.number_of_dimensions(), 1);
+    assert_eq!(s1.dimensions()[0], 16);
     assert_eq!(s1.total_elements(), 16);
 
     let s2 = Gna2Shape::d2(3, 4);
-    assert_eq!(s2.number_of_dimensions, 2);
+    assert_eq!(s2.number_of_dimensions(), 2);
     assert_eq!(s2.total_elements(), 12);
 
     let mut dummy_val: i16 = 42;
     let dummy_ptr = (&raw mut dummy_val).cast::<c_void>();
 
     let t_default = Gna2Tensor::default();
-    assert_eq!(t_default.shape, Gna2Shape::default());
-    assert_eq!(t_default.mode, Gna2TensorMode::Default);
-    assert_eq!(t_default.layout, [0; 8]);
-    assert_eq!(t_default.data_type, Gna2DataType::None);
-    assert!(t_default.data.is_null());
+    assert_eq!(t_default.shape(), &Gna2Shape::default());
+    assert_eq!(t_default.mode(), Gna2TensorMode::Default);
+    assert_eq!(t_default.layout(), &[0; 8]);
+    assert_eq!(t_default.data_type(), Gna2DataType::None);
+    assert!(t_default.data().is_null());
 
     let t_disabled = Gna2Tensor::disabled();
-    assert_eq!(t_disabled.mode, Gna2TensorMode::Disabled);
-    assert!(t_disabled.data.is_null());
+    assert_eq!(t_disabled.mode(), Gna2TensorMode::Disabled);
+    assert!(t_disabled.data().is_null());
 
     let t_d1 = Gna2Tensor::d1(8, Gna2DataType::Int16, dummy_ptr);
-    assert_eq!(t_d1.shape, Gna2Shape::d1(8));
-    assert_eq!(t_d1.data_type, Gna2DataType::Int16);
-    assert_eq!(t_d1.data, dummy_ptr);
+    assert_eq!(t_d1.shape(), &Gna2Shape::d1(8));
+    assert_eq!(t_d1.data_type(), Gna2DataType::Int16);
+    assert_eq!(t_d1.data(), dummy_ptr);
 
     let t_d2 = Gna2Tensor::d2(2, 4, Gna2DataType::Int32, dummy_ptr);
-    assert_eq!(t_d2.shape, Gna2Shape::d2(2, 4));
-    assert_eq!(t_d2.data_type, Gna2DataType::Int32);
-    assert_eq!(t_d2.data, dummy_ptr);
+    assert_eq!(t_d2.shape(), &Gna2Shape::d2(2, 4));
+    assert_eq!(t_d2.data_type(), Gna2DataType::Int32);
+    assert_eq!(t_d2.data(), dummy_ptr);
 
     let op = Gna2Operation::default();
-    assert_eq!(op.operation_type, Gna2OperationType::None);
-    assert!(op.operands.is_null());
-    assert_eq!(op.number_of_operands, 0);
-    assert!(op.parameters.is_null());
-    assert_eq!(op.number_of_parameters, 0);
+    assert_eq!(op.operation_type(), Gna2OperationType::None);
+    assert!(op.operands().is_null());
+    assert_eq!(op.number_of_operands(), 0);
+    assert!(op.parameters().is_null());
+    assert_eq!(op.number_of_parameters(), 0);
+
+    let mut operand_ptr: *const Gna2Tensor = &raw const t_d1;
+    let mut param_val: i32 = 1;
+    let mut param_ptr: *mut c_void = (&raw mut param_val).cast::<c_void>();
+    let op_built = Gna2Operation::new(Gna2OperationType::Copy)
+        .with_operands(&raw mut operand_ptr, 1)
+        .with_parameters(&raw mut param_ptr, 1);
+    assert_eq!(op_built.operation_type(), Gna2OperationType::Copy);
+    assert_eq!(op_built.number_of_operands(), 1);
+    assert!(!op_built.operands().is_null());
+    assert_eq!(op_built.number_of_parameters(), 1);
+    assert!(!op_built.parameters().is_null());
 
     let mut op_copy = op;
-    let model = Gna2Model {
-        number_of_operations: 1,
-        operations: &raw mut op_copy,
-    };
-    assert_eq!(model.number_of_operations, 1);
+    let model = Gna2Model::new(1, &raw mut op_copy);
+    assert_eq!(model.number_of_operations(), 1);
+    assert_eq!(model.operations(), &raw mut op_copy);
 
-    let item = Gna2ModelItem {
-        item_type: Gna2ItemType::OPERATION_TYPE,
-        operation_index: 0,
-        operand_index: GNA2_DISABLED,
-        parameter_index: GNA2_DEFAULT,
-        shape_dimension_index: -1,
-        properties: [0; 4],
-    };
-    let model_err = Gna2ModelError {
-        source: item,
-        reason: Gna2ErrorType::NOT_ALIGNED,
-        value: 64,
-    };
-    assert_eq!(model_err.reason, Gna2ErrorType::NOT_ALIGNED);
+    let item_type = Gna2ItemType::new(3);
+    assert_eq!(item_type.raw(), 3);
+    assert_eq!(item_type, Gna2ItemType::OPERATION_TYPE);
+
+    let err_type = Gna2ErrorType::new(-14);
+    assert_eq!(err_type.raw(), -14);
+    assert_eq!(err_type, Gna2ErrorType::NOT_ALIGNED);
+
+    let item = Gna2ModelItem::new()
+        .with_item_type(item_type)
+        .with_operation_index(0)
+        .with_operand_index(GNA2_DISABLED)
+        .with_parameter_index(GNA2_DEFAULT)
+        .with_shape_dimension_index(-1)
+        .with_properties([1, 2, 3, 4]);
+    assert_eq!(item.item_type(), Gna2ItemType::OPERATION_TYPE);
+    assert_eq!(item.operation_index(), 0);
+    assert_eq!(item.operand_index(), GNA2_DISABLED);
+    assert_eq!(item.parameter_index(), GNA2_DEFAULT);
+    assert_eq!(item.shape_dimension_index(), -1);
+    assert_eq!(item.properties(), &[1, 2, 3, 4]);
+
+    let model_err = Gna2ModelError::new(item, err_type, 64);
+    assert_eq!(model_err.source(), &item);
+    assert_eq!(model_err.reason(), Gna2ErrorType::NOT_ALIGNED);
+    assert_eq!(model_err.value(), 64);
     assert_eq!(Gna2AccelerationMode::default(), Gna2AccelerationMode::Auto);
     assert_eq!(
         Gna2InstrumentationUnit::default(),
