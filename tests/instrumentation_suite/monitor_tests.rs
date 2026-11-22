@@ -72,3 +72,46 @@ fn test_usage_monitor_without_exec_time() {
     assert!((monitor.cumulative_hw_usage_ratio() - 0.8).abs() < 1e-6);
     assert_eq!(monitor.average_execution_time(), None);
 }
+
+#[test]
+fn test_device_profile_and_monitor_ratios() {
+    use nanai_gna_dll_load::GnaDeviceProfile;
+    use std::time::Duration;
+
+    let profile = GnaDeviceProfile::new("GNA 3.0", 400_000_000).with_mac_units(32);
+    assert_eq!(profile.name, "GNA 3.0");
+    assert_eq!(profile.max_clock_hz, 400_000_000);
+    assert_eq!(profile.mac_units, Some(32));
+
+    let zero_stats = GnaPerformanceStats::from_cycles(0, 0);
+    assert_eq!(zero_stats.stall_ratio(), 0.0);
+
+    let stats = GnaPerformanceStats::from_cycles(1000, 250);
+    assert!((stats.stall_ratio() - 0.25).abs() < 1e-6);
+
+    let mut monitor = GnaUsageMonitor::new();
+    assert_eq!(monitor.cumulative_stall_ratio(), 0.0);
+    assert_eq!(
+        monitor.effective_utilization_ratio(Duration::ZERO, &profile),
+        0.0
+    );
+
+    monitor.record(&stats);
+    assert!((monitor.cumulative_stall_ratio() - 0.25).abs() < 1e-6);
+
+    let zero_clock_profile = GnaDeviceProfile::new("Zero", 0);
+    assert_eq!(
+        monitor.effective_utilization_ratio(Duration::from_secs(1), &zero_clock_profile),
+        0.0
+    );
+
+    let eff = monitor.effective_utilization_ratio(Duration::from_millis(1), &profile);
+    let expected = 750.0 / (400_000_000.0 * 0.001);
+    assert!((eff - expected).abs() < 1e-9);
+    assert!(
+        (monitor.effective_utilization_percentage(Duration::from_millis(1), &profile)
+            - expected * 100.0)
+            .abs()
+            < 1e-7
+    );
+}

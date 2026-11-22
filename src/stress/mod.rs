@@ -259,3 +259,26 @@ impl GnaLoadTestReport {
         println!("==================================================");
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::instrumentation::GnaDeviceProfile;
+
+    #[test]
+    fn test_report_effective_utilization() {
+        let report = GnaLoadTestReport {
+            completed_inferences: 1,
+            failed_inferences: 0,
+            elapsed_time: Duration::from_millis(1),
+            inferences_per_second: 1000.0,
+            latency_min: Duration::from_millis(1),
+            latency_max: Duration::from_millis(1),
+            latency_avg: Duration::from_millis(1),
+            usage_monitor: GnaUsageMonitor::default(),
+        };
+        let profile = GnaDeviceProfile::new("GNA 3.0", 400_000_000);
+        assert_eq!(report.effective_utilization_ratio(&profile), 0.0);
+        assert_eq!(report.effective_utilization_percentage(&profile), 0.0);
+    }
+}

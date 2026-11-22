@@ -409,6 +409,15 @@ mod tests {
     }
 
     #[test]
+    fn test_inspect_system_gna_state_none_and_invalid_pdh() {
+        let state_none = inspect_system_gna_state(None).unwrap();
+        assert!(state_none.pdh_counter_value.is_none());
+
+        let state_invalid = inspect_system_gna_state(Some("\\NonExistent\\Counter")).unwrap();
+        assert!(state_invalid.pdh_counter_value.is_none());
+    }
+
+    #[test]
     fn test_detect_processes_empty_patterns() {
         let res = detect_processes_by_module_patterns(&[]).unwrap();
         assert!(res.is_empty());
