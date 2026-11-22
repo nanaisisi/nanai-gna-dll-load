@@ -45,6 +45,11 @@ impl GnaModelBuilder {
                     };
                     operations.push(op_res?);
                 }
+                LayerDefinition::Generic { op_type, tensors } => {
+                    operations.push(super::layer::init_generic_operation(
+                        allocator, *op_type, tensors,
+                    )?);
+                }
                 LayerDefinition::Raw(op) => {
                     operations.push(*op);
                 }

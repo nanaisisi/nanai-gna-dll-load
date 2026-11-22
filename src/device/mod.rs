@@ -64,6 +64,21 @@ impl GnaDevice {
         Self::open(library, 0)
     }
 
+    /// Close and reopen the underlying GNA device session.
+    ///
+    /// Useful when reusing a cached `GnaDevice` across multiple independent model compilations.
+    pub fn reopen(&mut self) -> Result<()> {
+        let close_status = unsafe { (self.library.symbols().device_close())(self.index) };
+        if close_status != GNA2_STATUS_SUCCESS {
+            return Err(GnaError::from_status(close_status));
+        }
+        let open_status = unsafe { (self.library.symbols().device_open())(self.index) };
+        if open_status != GNA2_STATUS_SUCCESS {
+            return Err(GnaError::from_status(open_status));
+        }
+        Ok(())
+    }
+
     /// Create and initialize a GNA software device for model export.
     pub fn create_for_export(
         library: &GnaLibrary,

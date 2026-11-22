@@ -35,6 +35,10 @@ pub(super) struct FullyConnectedAffineLayer {
 /// Layer operation definition for constructing a GNA data-flow model.
 pub(super) enum LayerDefinition {
     FullyConnectedAffine(Box<FullyConnectedAffineLayer>),
+    Generic {
+        op_type: Gna2OperationType,
+        tensors: Box<[Gna2Tensor]>,
+    },
     Raw(Gna2Operation),
 }
 
@@ -90,4 +94,24 @@ pub(super) fn init_fca_manual(
     // Allocate operands pointer table (5 operands: input, output, weights, biases, activation)
     let buf = unsafe { allocate_fca_operands(allocator, fca) }?;
     Ok(Gna2Operation::new(Gna2OperationType::FullyConnectedAffine).with_operands(buf, 5))
+}
+
+/// Initialize a generic GNA operation from a slice of stable-address tensors.
+pub(super) fn init_generic_operation(
+    allocator: Gna2UserAllocator,
+    op_type: Gna2OperationType,
+    tensors: &[Gna2Tensor],
+) -> Result<Gna2Operation> {
+    let count = tensors.len();
+    let size = (count * std::mem::size_of::<*const Gna2Tensor>()) as u32;
+    let mem = unsafe { allocator(size) } as *mut *const Gna2Tensor;
+    if mem.is_null() {
+        return Err(GnaError::NullPointer);
+    }
+    for (i, tensor) in tensors.iter().enumerate() {
+        unsafe {
+            *mem.add(i) = tensor as *const Gna2Tensor;
+        }
+    }
+    Ok(Gna2Operation::new(op_type).with_operands(mem, count as u32))
 }
