@@ -9,9 +9,7 @@ mod tests {
 
     #[test]
     fn test_metric_store_averaging_logic() {
-        let api = MonitoringApi {
-            store: MetricStore::new(),
-        };
+        let api = MonitoringApi::default();
         let key = "latency_average";
 
         // 1. 最初の記録 (Count=1, Sum=100.0, Avg=100.0)
@@ -36,15 +34,17 @@ mod tests {
         );
 
         // 4. 全メトリクスの確認
-        let metrics = api.store.get_all_metrics();
+        let metrics = api.store().get_all_metrics();
         assert_eq!(metrics.len(), 1, "Should only contain one metric key.");
 
         let final_metric = metrics.get(key).expect("Key must exist after recording.");
-        assert_eq!(final_metric.count, 3, "Total count is incorrect.");
+        assert_eq!(final_metric.count(), 3, "Total count is incorrect.");
         assert!(
-            (final_metric.sum_of_values - 170.0).abs() < 0.001,
+            (final_metric.sum_of_values() - 170.0).abs() < 0.001,
             "Total sum is incorrect."
         );
+        assert_eq!(final_metric.value(), 20.0);
+        let _ = final_metric.last_updated();
 
         println!("Success: Average tracking logic verified across multiple calls.");
     }
@@ -55,8 +55,8 @@ mod tests {
         let initial_metric = store.get_or_init(key1);
 
         // 初期値の検証: Count=0, Sum=0, Value=0.0 (初期化ロジックが正しく機能しているか確認)
-        assert_eq!(initial_metric.count, 0);
-        assert_eq!(initial_metric.sum_of_values, 0.0);
+        assert_eq!(initial_metric.count(), 0);
+        assert_eq!(initial_metric.sum_of_values(), 0.0);
     }
 
     #[test]
@@ -70,8 +70,8 @@ mod tests {
 
         assert_eq!(avg1, 10.0); // 平均値は単一値と同じ
         let metric = store.get_metric(key).expect("Metric should exist");
-        assert_eq!(metric.count, 1);
-        assert_eq!(metric.sum_of_values, 10.0);
+        assert_eq!(metric.count(), 1);
+        assert_eq!(metric.sum_of_values(), 10.0);
 
         // 2回目の記録 (異なる値)
         let value2: f64 = 30.0;
@@ -80,9 +80,9 @@ mod tests {
         // 新しい平均値の検証: (10 + 30) / 2 = 20.0
         assert_eq!(avg2, 20.0);
         let metric_after = store.get_metric(key).expect("Metric should exist");
-        assert_eq!(metric_after.count, 2);
+        assert_eq!(metric_after.count(), 2);
         // Sum: 10.0 + 30.0 = 40.0
-        assert!((metric_after.sum_of_values - 40.0).abs() < 1e-9);
+        assert!((metric_after.sum_of_values() - 40.0).abs() < 1e-9);
     }
 
     #[test]
@@ -91,25 +91,25 @@ mod tests {
 
         // Key A: 10 -> Avg=10
         store.record("A", 10.0);
-        assert!((store.get_metric("A").unwrap().sum_of_values - (1.0 * 10.0)).abs() < 1e-9);
+        assert!((store.get_metric("A").unwrap().sum_of_values() - (1.0 * 10.0)).abs() < 1e-9);
 
         // Key B: 5 -> Avg=5
         store.record("B", 5.0);
-        assert!((store.get_metric("B").unwrap().sum_of_values - (1.0 * 5.0)).abs() < 1e-9);
+        assert!((store.get_metric("B").unwrap().sum_of_values() - (1.0 * 5.0)).abs() < 1e-9);
 
         // Key A: 20 -> Avg=(10+20)/2 = 15
         store.record("A", 20.0);
-        assert!((store.get_metric("A").unwrap().sum_of_values - (2.0 * 15.0)).abs() < 1e-9);
+        assert!((store.get_metric("A").unwrap().sum_of_values() - (2.0 * 15.0)).abs() < 1e-9);
 
         // Key B: 5 -> Avg=(5+5)/2 = 5
         store.record("B", 5.0);
-        assert!((store.get_metric("B").unwrap().sum_of_values - (2.0 * 5.0)).abs() < 1e-9);
+        assert!((store.get_metric("B").unwrap().sum_of_values() - (2.0 * 5.0)).abs() < 1e-9);
 
         // 全てのメトリクスを検証
         let all = store.get_all_metrics();
         assert_eq!(all.len(), 2);
-        assert!((all.get("A").unwrap().sum_of_values - (2.0 * 15.0)).abs() < 1e-9);
-        assert!((all.get("B").unwrap().sum_of_values - (2.0 * 5.0)).abs() < 1e-9);
+        assert!((all.get("A").unwrap().sum_of_values() - (2.0 * 15.0)).abs() < 1e-9);
+        assert!((all.get("B").unwrap().sum_of_values() - (2.0 * 5.0)).abs() < 1e-9);
     }
 
     #[test]
@@ -130,7 +130,7 @@ mod tests {
         api1.record_measurement(key, value);
 
         // 検証: API2から読み出し、値が保持されているか
-        let retrieved_avg = api2.store.get_metric(key).unwrap().sum_of_values / 1.0;
+        let retrieved_avg = api2.store().get_metric(key).unwrap().sum_of_values() / 1.0;
         assert!(
             (retrieved_avg - 50.0).abs() < 1e-9,
             "Singleton state should persist across calls."
@@ -138,7 +138,7 @@ mod tests {
 
         // 2回目：API2を通じて再記録
         api2.record_measurement(key, 100.0); // 新しい合計: 150.0 / Count: 2
-        let final_avg = api2.store.get_metric(key).unwrap().sum_of_values / 2.0;
+        let final_avg = api2.store().get_metric(key).unwrap().sum_of_values() / 2.0;
         assert!(
             (final_avg - 75.0).abs() < 1e-9,
             "Singleton state must correctly accumulate."
@@ -150,12 +150,12 @@ mod tests {
         use nanai_gna_dll_load::metrics::metric::Metric;
 
         let metric = Metric::default();
-        assert_eq!(metric.count, 0);
-        assert_eq!(metric.sum_of_values, 0.0);
-        assert_eq!(metric.value, 0.0);
+        assert_eq!(metric.count(), 0);
+        assert_eq!(metric.sum_of_values(), 0.0);
+        assert_eq!(metric.value(), 0.0);
 
         let cloned = metric.clone();
-        assert_eq!(cloned.count, 0);
+        assert_eq!(cloned.count(), 0);
         assert!(!format!("{cloned:?}").is_empty());
     }
 
@@ -169,8 +169,8 @@ mod tests {
         assert!((avg - 42.5).abs() < 1e-9);
 
         let existing = store.get_or_init("cpu_usage");
-        assert_eq!(existing.count, 1);
-        assert!((existing.sum_of_values - 42.5).abs() < 1e-9);
-        assert!((existing.value - 42.5).abs() < 1e-9);
+        assert_eq!(existing.count(), 1);
+        assert!((existing.sum_of_values() - 42.5).abs() < 1e-9);
+        assert!((existing.value() - 42.5).abs() < 1e-9);
     }
 }

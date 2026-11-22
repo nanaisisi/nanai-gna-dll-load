@@ -7,9 +7,16 @@ pub const GNA2_STATUS_MODEL_ERROR_UNAVAILABLE: Gna2Status = 3;
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub struct Gna2DeviceVersion(pub u32);
+pub struct Gna2DeviceVersion(pub(crate) u32);
 
 impl Gna2DeviceVersion {
+    pub const fn new(raw: u32) -> Self {
+        Self(raw)
+    }
+
+    pub const fn raw(&self) -> u32 {
+        self.0
+    }
     pub const SOFTWARE_EMULATION: Self = Self(0);
     pub const GMM: Self = Self(0x01);
     pub const V0_9: Self = Self(0x09);

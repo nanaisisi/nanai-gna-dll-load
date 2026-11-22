@@ -24,7 +24,7 @@ fn main() {
                 match GnaDevice::get_version(&library, index) {
                     Ok(version) => println!(
                         "  Device #{index}: 0x{:02x} ({})",
-                        version.0,
+                        version.raw(),
                         version.as_str()
                     ),
                     Err(error) => eprintln!("  Device #{index}: failed to query version: {error}"),

@@ -11,7 +11,8 @@ mod tests;
 use std::ffi::c_char;
 
 use crate::loader::GnaLibrary;
-use crate::types::{GNA2_STATUS_SUCCESS, Gna2ModelError};
+use crate::types::device::GNA2_STATUS_SUCCESS;
+use crate::types::error_types::Gna2ModelError;
 
 /// RAII wrapper for a compiled GNA Model handle (`model_id`).
 ///

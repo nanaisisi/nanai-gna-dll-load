@@ -128,9 +128,9 @@ fn test_device_version_and_generations() {
         Gna2ModelExportComponent,
     };
 
-    assert_eq!(Gna2DeviceVersion::SOFTWARE_EMULATION.0, 0);
-    assert_eq!(Gna2DeviceVersion::EMBEDDED_1_0.0, 0x10E);
-    assert_eq!(Gna2DeviceVersion::EMBEDDED_3_1.0, 0x310E);
+    assert_eq!(Gna2DeviceVersion::SOFTWARE_EMULATION.raw(), 0);
+    assert_eq!(Gna2DeviceVersion::EMBEDDED_1_0.raw(), 0x10E);
+    assert_eq!(Gna2DeviceVersion::EMBEDDED_3_1.raw(), 0x310E);
     assert_eq!(Gna2DeviceVersion::EMBEDDED_3_1.as_str(), "GNA Embedded 3.1");
 
     assert_eq!(Gna2DeviceGeneration::Gen3_1 as u32, 0x310);
@@ -168,8 +168,7 @@ fn test_get_library_version_none_err_and_ok() {
     unsafe extern "C" fn version_err(_buf: *mut c_char, _len: u32) -> Gna2Status {
         -1
     }
-    let mut table_err = base_mock_symbol_table();
-    table_err.get_library_version = Some(version_err);
+    let table_err = base_mock_symbol_table().with_get_library_version(version_err);
     let lib_err = GnaLibrary::from_symbol_table(table_err);
     match lib_err.get_library_version().unwrap_err() {
         GnaError::StatusError { status, .. } => assert_eq!(status, -1),
@@ -187,8 +186,7 @@ fn test_get_library_version_none_err_and_ok() {
         }
         GNA2_STATUS_SUCCESS
     }
-    let mut table_ok = base_mock_symbol_table();
-    table_ok.get_library_version = Some(version_ok);
+    let table_ok = base_mock_symbol_table().with_get_library_version(version_ok);
     let lib_ok = GnaLibrary::from_symbol_table(table_ok);
     assert_eq!(lib_ok.get_library_version().unwrap(), "2.1.3");
 }
@@ -206,8 +204,7 @@ fn test_override_alignment_none_err_and_ok() {
     unsafe extern "C" fn align_err(_alignment: u32) -> Gna2Status {
         -5
     }
-    let mut table_err = base_mock_symbol_table();
-    table_err.model_override_alignment = Some(align_err);
+    let table_err = base_mock_symbol_table().with_model_override_alignment(align_err);
     let lib_err = GnaLibrary::from_symbol_table(table_err);
     match lib_err.override_alignment(64).unwrap_err() {
         GnaError::StatusError { status, .. } => assert_eq!(status, -5),
@@ -220,8 +217,7 @@ fn test_override_alignment_none_err_and_ok() {
         LAST_ALIGNMENT.store(alignment, Ordering::SeqCst);
         GNA2_STATUS_SUCCESS
     }
-    let mut table_ok = base_mock_symbol_table();
-    table_ok.model_override_alignment = Some(align_ok);
+    let table_ok = base_mock_symbol_table().with_model_override_alignment(align_ok);
     let lib_ok = GnaLibrary::from_symbol_table(table_ok);
     lib_ok.override_alignment(128).unwrap();
     assert_eq!(LAST_ALIGNMENT.load(Ordering::SeqCst), 128);

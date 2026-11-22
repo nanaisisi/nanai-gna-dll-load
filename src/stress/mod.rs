@@ -10,15 +10,15 @@ use crate::instrumentation::GnaUsageMonitor;
 #[derive(Debug, Clone)]
 pub struct GnaLoadTestConfig {
     /// Number of iterations to run (if duration is not set or whichever completes first).
-    pub iterations: Option<usize>,
+    pub(crate) iterations: Option<usize>,
     /// Maximum duration to run the load test.
-    pub duration: Option<Duration>,
+    pub(crate) duration: Option<Duration>,
     /// Number of concurrent in-flight requests (pipeline depth). Default: 1.
-    pub concurrency: usize,
+    pub(crate) concurrency: usize,
     /// Timeout per inference request in milliseconds. Default: 1000 ms.
-    pub timeout_per_request_ms: u32,
+    pub(crate) timeout_per_request_ms: u32,
     /// Whether to track hardware utilization metrics using instrumentation. Default: true.
-    pub track_hw_usage: bool,
+    pub(crate) track_hw_usage: bool,
 }
 
 impl Default for GnaLoadTestConfig {
@@ -68,30 +68,100 @@ impl GnaLoadTestConfig {
         self.track_hw_usage = enable;
         self
     }
+
+    /// Set or clear optional iteration limit.
+    pub fn with_optional_iterations(mut self, iterations: Option<usize>) -> Self {
+        self.iterations = iterations;
+        self
+    }
+
+    /// Configured iteration limit, if any.
+    pub fn iterations(&self) -> Option<usize> {
+        self.iterations
+    }
+
+    /// Configured maximum duration, if any.
+    pub fn duration(&self) -> Option<Duration> {
+        self.duration
+    }
+
+    /// Number of concurrent in-flight requests.
+    pub fn concurrency(&self) -> usize {
+        self.concurrency
+    }
+
+    /// Timeout per inference request in milliseconds.
+    pub fn timeout_per_request_ms(&self) -> u32 {
+        self.timeout_per_request_ms
+    }
+
+    /// Whether hardware utilization tracking is enabled.
+    pub fn track_hw_usage(&self) -> bool {
+        self.track_hw_usage
+    }
 }
 
 /// Comprehensive report containing performance, throughput, and latency metrics from a load test.
 #[derive(Debug, Clone)]
 pub struct GnaLoadTestReport {
     /// Number of successful inferences completed.
-    pub completed_inferences: usize,
+    pub(crate) completed_inferences: usize,
     /// Number of failed or timed-out inferences.
-    pub failed_inferences: usize,
+    pub(crate) failed_inferences: usize,
     /// Total wall-clock time elapsed for the load test.
-    pub elapsed_time: Duration,
+    pub(crate) elapsed_time: Duration,
     /// Throughput in inferences per second (IPS).
-    pub inferences_per_second: f64,
+    pub(crate) inferences_per_second: f64,
     /// Minimum observed inference latency.
-    pub latency_min: Duration,
+    pub(crate) latency_min: Duration,
     /// Maximum observed inference latency.
-    pub latency_max: Duration,
+    pub(crate) latency_max: Duration,
     /// Average observed inference latency.
-    pub latency_avg: Duration,
+    pub(crate) latency_avg: Duration,
     /// Hardware utilization monitor containing accumulated cycles & usage rate.
-    pub usage_monitor: GnaUsageMonitor,
+    pub(crate) usage_monitor: GnaUsageMonitor,
 }
 
 impl GnaLoadTestReport {
+    /// Number of successful inferences completed.
+    pub fn completed_inferences(&self) -> usize {
+        self.completed_inferences
+    }
+
+    /// Number of failed or timed-out inferences.
+    pub fn failed_inferences(&self) -> usize {
+        self.failed_inferences
+    }
+
+    /// Total wall-clock time elapsed for the load test.
+    pub fn elapsed_time(&self) -> Duration {
+        self.elapsed_time
+    }
+
+    /// Throughput in inferences per second (IPS).
+    pub fn inferences_per_second(&self) -> f64 {
+        self.inferences_per_second
+    }
+
+    /// Minimum observed inference latency.
+    pub fn latency_min(&self) -> Duration {
+        self.latency_min
+    }
+
+    /// Maximum observed inference latency.
+    pub fn latency_max(&self) -> Duration {
+        self.latency_max
+    }
+
+    /// Average observed inference latency.
+    pub fn latency_avg(&self) -> Duration {
+        self.latency_avg
+    }
+
+    /// Hardware utilization monitor containing accumulated cycles & usage rate.
+    pub fn usage_monitor(&self) -> &GnaUsageMonitor {
+        &self.usage_monitor
+    }
     /// Print a formatted summary report to standard output.
     pub fn print_summary(&self) {
         println!("==================================================");

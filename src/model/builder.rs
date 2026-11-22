@@ -1,4 +1,4 @@
-use crate::types::{Gna2Operation, Gna2Tensor};
+use crate::types::model::{Gna2Operation, Gna2Tensor};
 
 use super::{FullyConnectedAffineLayer, LayerDefinition};
 

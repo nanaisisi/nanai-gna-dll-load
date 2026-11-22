@@ -20,20 +20,19 @@ fn test_load_tester_drain_updates_latency_min_and_max() {
     let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
     let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
 
-    let cfg = GnaLoadTestConfig {
-        iterations: None,
-        duration: Some(Duration::from_millis(15)),
-        concurrency: 3,
-        timeout_per_request_ms: 500,
-        track_hw_usage: true,
-    };
+    let cfg = GnaLoadTestConfig::new()
+        .with_optional_iterations(None)
+        .with_duration(Duration::from_millis(15))
+        .with_concurrency(3)
+        .with_timeout_ms(500)
+        .with_track_hw_usage(true);
     let report = GnaLoadTester::new(cfg).run(&mut req_cfg).unwrap();
 
-    assert_eq!(report.completed_inferences, 2);
-    assert_eq!(report.failed_inferences, 1);
-    assert!(report.latency_min > Duration::ZERO);
-    assert!(report.latency_min <= report.latency_max);
-    assert_eq!(report.usage_monitor.inference_count(), 2);
+    assert_eq!(report.completed_inferences(), 2);
+    assert_eq!(report.failed_inferences(), 1);
+    assert!(report.latency_min() > Duration::ZERO);
+    assert!(report.latency_min() <= report.latency_max());
+    assert_eq!(report.usage_monitor().inference_count(), 2);
 }
 
 #[test]
@@ -48,17 +47,18 @@ fn test_load_tester_duration_boundary_and_zero_elapsed() {
         .collect();
     for _ in 0..25 {
         for ns in &durations_ns {
-            let report = GnaLoadTester::new(GnaLoadTestConfig {
-                iterations: Some(1),
-                duration: Some(Duration::from_nanos(*ns)),
-                concurrency: 1,
-                timeout_per_request_ms: 100,
-                track_hw_usage: false,
-            })
+            let report = GnaLoadTester::new(
+                GnaLoadTestConfig::new()
+                    .with_iterations(1)
+                    .with_duration(Duration::from_nanos(*ns))
+                    .with_concurrency(1)
+                    .with_timeout_ms(100)
+                    .with_track_hw_usage(false),
+            )
             .run(&mut req_cfg)
             .unwrap();
-            assert!(report.completed_inferences <= 1);
-            assert_eq!(report.failed_inferences, 0);
+            assert!(report.completed_inferences() <= 1);
+            assert_eq!(report.failed_inferences(), 0);
         }
     }
 
@@ -70,9 +70,9 @@ fn test_load_tester_duration_boundary_and_zero_elapsed() {
     );
     for _ in 0..10_000 {
         let report = zero_tester.run(&mut req_cfg).unwrap();
-        assert_eq!(report.completed_inferences, 0);
-        assert_eq!(report.inferences_per_second, 0.0);
-        if report.elapsed_time.is_zero() {
+        assert_eq!(report.completed_inferences(), 0);
+        assert_eq!(report.inferences_per_second(), 0.0);
+        if report.elapsed_time().is_zero() {
             break;
         }
     }
@@ -91,18 +91,17 @@ fn test_load_tester_drain_latency_below_max() {
     let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
     let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
 
-    let cfg = GnaLoadTestConfig {
-        iterations: None,
-        duration: Some(Duration::from_millis(60)),
-        concurrency: 2,
-        timeout_per_request_ms: 500,
-        track_hw_usage: true,
-    };
+    let cfg = GnaLoadTestConfig::new()
+        .with_optional_iterations(None)
+        .with_duration(Duration::from_millis(60))
+        .with_concurrency(2)
+        .with_timeout_ms(500)
+        .with_track_hw_usage(true);
     let report = GnaLoadTester::new(cfg).run(&mut req_cfg).unwrap();
 
-    assert_eq!(report.completed_inferences, 3);
-    assert_eq!(report.failed_inferences, 0);
-    assert_eq!(report.usage_monitor.inference_count(), 3);
+    assert_eq!(report.completed_inferences(), 3);
+    assert_eq!(report.failed_inferences(), 0);
+    assert_eq!(report.usage_monitor().inference_count(), 3);
 }
 
 #[test]
@@ -115,18 +114,17 @@ fn test_load_tester_drain_track_hw_usage_false() {
     let lib = GnaLibrary::from_symbol_table(full_stress_symbols());
     let mut req_cfg = GnaRequestConfig::create(&lib, 1).unwrap();
 
-    let cfg = GnaLoadTestConfig {
-        iterations: None,
-        duration: Some(Duration::from_millis(25)),
-        concurrency: 2,
-        timeout_per_request_ms: 500,
-        track_hw_usage: false,
-    };
+    let cfg = GnaLoadTestConfig::new()
+        .with_optional_iterations(None)
+        .with_duration(Duration::from_millis(25))
+        .with_concurrency(2)
+        .with_timeout_ms(500)
+        .with_track_hw_usage(false);
     let report = GnaLoadTester::new(cfg).run(&mut req_cfg).unwrap();
 
-    assert_eq!(report.completed_inferences, 2);
-    assert_eq!(report.failed_inferences, 0);
-    assert_eq!(report.usage_monitor.inference_count(), 0);
+    assert_eq!(report.completed_inferences(), 2);
+    assert_eq!(report.failed_inferences(), 0);
+    assert_eq!(report.usage_monitor().inference_count(), 0);
 }
 
 #[test]
@@ -137,20 +135,19 @@ fn test_load_tester_drain_missing_instrumentation_stats_err() {
     });
 
     let mut syms_no_inst = full_stress_symbols();
-    syms_no_inst.instrumentation_config_create = None;
+    syms_no_inst.clear_instrumentation_config_create();
     let lib_no_inst = GnaLibrary::from_symbol_table(syms_no_inst);
     let mut req_no_inst = GnaRequestConfig::create(&lib_no_inst, 1).unwrap();
 
-    let cfg = GnaLoadTestConfig {
-        iterations: None,
-        duration: Some(Duration::from_millis(25)),
-        concurrency: 2,
-        timeout_per_request_ms: 500,
-        track_hw_usage: true,
-    };
+    let cfg = GnaLoadTestConfig::new()
+        .with_optional_iterations(None)
+        .with_duration(Duration::from_millis(25))
+        .with_concurrency(2)
+        .with_timeout_ms(500)
+        .with_track_hw_usage(true);
     let report = GnaLoadTester::new(cfg).run(&mut req_no_inst).unwrap();
 
-    assert_eq!(report.completed_inferences, 2);
-    assert_eq!(report.failed_inferences, 0);
-    assert_eq!(report.usage_monitor.inference_count(), 0);
+    assert_eq!(report.completed_inferences(), 2);
+    assert_eq!(report.failed_inferences(), 0);
+    assert_eq!(report.usage_monitor().inference_count(), 0);
 }

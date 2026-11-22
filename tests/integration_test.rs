@@ -21,19 +21,19 @@ mod tests {
 
         // 2. 値の記録と更新（record_measurement）の実行 (成功時)
         api.record_measurement(key1, 50.0); // 最初のレイテンシをセット
-        assert!(api.store.get_or_init(key1).value == 50.0);
+        assert!(api.store().get_or_init(key1).value() == 50.0);
 
         // 時間経過と再測定（更新）のシミュレーション
         thread::sleep(Duration::from_millis(1));
         api.record_measurement(key1, 65.0); // 更新されるべき値
-        assert!(api.store.get_or_init(key1).value == 65.0);
+        assert!(api.store().get_or_init(key1).value() == 65.0);
 
         // 3. 新しいメトリクスの記録（異なる指標）
         api.record_measurement(key2, 1.0); // カウンタとして初期値1.0を設定
-        assert!(api.store.get_or_init(key2).value == 1.0);
+        assert!(api.store().get_or_init(key2).value() == 1.0);
 
         // 4. 全メトリクス取得の検証
-        let metrics = api.store.get_all_metrics();
+        let metrics = api.store().get_all_metrics();
         assert_eq!(
             metrics.len(),
             2,

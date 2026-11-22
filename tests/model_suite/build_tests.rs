@@ -80,7 +80,7 @@ fn test_model_build_with_fca_init_and_activation() {
 fn test_model_build_manual_fca_fallback_and_raw_operations() {
     reset_mock_state();
     let mut symbols = full_mock_symbol_table();
-    symbols.operation_init_fully_connected_affine = None;
+    symbols.clear_operation_init_fully_connected_affine();
     let library = GnaLibrary::from_symbol_table(symbols);
     let device = GnaDevice::open(&library, 0).expect("open device");
 
@@ -155,7 +155,7 @@ fn test_model_build_manual_fca_fallback_and_raw_operations() {
 fn test_model_drop_without_release_symbol() {
     reset_mock_state();
     let mut symbols = full_mock_symbol_table();
-    symbols.model_release = None;
+    symbols.clear_model_release();
     let library = GnaLibrary::from_symbol_table(symbols);
     let device = GnaDevice::open(&library, 0).expect("open device");
 

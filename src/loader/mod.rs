@@ -7,7 +7,8 @@ use std::ffi::OsStr;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-use crate::error::{GnaError, Result};
+use crate::Result;
+use crate::error::GnaError;
 use crate::symbol_table::GnaSymbolTable;
 
 /// Represents a dynamically loaded GNA runtime library.

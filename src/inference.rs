@@ -3,7 +3,7 @@ use std::ffi::c_void;
 use crate::error::{GnaError, Result};
 use crate::instrumentation::{GnaInstrumentationConfig, GnaPerformanceStats};
 use crate::loader::GnaLibrary;
-use crate::types::{
+use crate::types::device::{
     GNA2_STATUS_SUCCESS, Gna2AccelerationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
 
@@ -89,7 +89,7 @@ impl GnaRequestConfig {
     /// Enable hardware consistency for the request configuration.
     pub fn enable_hardware_consistency(
         &mut self,
-        device_version: crate::types::Gna2DeviceVersion,
+        device_version: crate::types::device::Gna2DeviceVersion,
     ) -> Result<()> {
         let consistency_fn = self
             .library

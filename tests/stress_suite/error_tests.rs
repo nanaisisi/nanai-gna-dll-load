@@ -23,10 +23,10 @@ fn test_load_tester_zero_iterations_and_errors() {
     )
     .run(&mut req_cfg)
     .unwrap();
-    assert_eq!(report_zero.completed_inferences, 0);
-    assert_eq!(report_zero.failed_inferences, 0);
-    assert_eq!(report_zero.latency_min, Duration::ZERO);
-    assert_eq!(report_zero.latency_avg, Duration::ZERO);
+    assert_eq!(report_zero.completed_inferences(), 0);
+    assert_eq!(report_zero.failed_inferences(), 0);
+    assert_eq!(report_zero.latency_min(), Duration::ZERO);
+    assert_eq!(report_zero.latency_avg(), Duration::ZERO);
 
     // Immediate enqueue failure with empty in_flight queue -> returns Err
     reset_stress_state();
@@ -55,8 +55,8 @@ fn test_load_tester_zero_iterations_and_errors() {
     )
     .run(&mut req_cfg)
     .unwrap();
-    assert_eq!(report_partial_enqueue.completed_inferences, 1);
-    assert_eq!(report_partial_enqueue.failed_inferences, 1);
+    assert_eq!(report_partial_enqueue.completed_inferences(), 1);
+    assert_eq!(report_partial_enqueue.failed_inferences(), 1);
 
     // Wait failure in main loop -> counts failed inference and continues
     reset_stress_state();
@@ -71,6 +71,6 @@ fn test_load_tester_zero_iterations_and_errors() {
     )
     .run(&mut req_cfg)
     .unwrap();
-    assert_eq!(report_wait_err.completed_inferences, 2);
-    assert_eq!(report_wait_err.failed_inferences, 1);
+    assert_eq!(report_wait_err.completed_inferences(), 2);
+    assert_eq!(report_wait_err.failed_inferences(), 1);
 }

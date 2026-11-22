@@ -2,7 +2,8 @@ use std::env;
 use std::ffi::{OsStr, OsString};
 use std::path::{Path, PathBuf};
 
-use crate::error::{GnaError, Result};
+use crate::Result;
+use crate::error::GnaError;
 
 use super::GnaLibrary;
 

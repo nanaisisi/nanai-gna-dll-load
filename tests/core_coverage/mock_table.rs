@@ -131,54 +131,22 @@ unsafe extern "C" fn mock_memory_set_tag(memory: *mut c_void, tag: u32) -> Gna2S
 }
 
 pub(super) fn base_mock_symbol_table() -> GnaSymbolTable {
-    GnaSymbolTable {
-        device_get_count: mock_device_get_count,
-        device_get_version: mock_device_get_version,
-        device_open: mock_device_open,
-        device_create_for_export: None,
-        device_close: mock_device_close,
-        device_set_number_of_threads: None,
-        get_library_version: None,
-        memory_alloc: mock_memory_alloc,
-        memory_alloc_for_device: None,
-        memory_free: mock_memory_free,
-        memory_set_tag: None,
-        model_create: None,
-        model_release: None,
-        model_get_last_error: None,
-        model_error_get_message: None,
-        model_error_get_max_message_length: None,
-        operation_init_fully_connected_affine: None,
-        request_config_create: None,
-        request_config_set_operand_buffer: None,
-        request_config_enable_active_list: None,
-        request_config_enable_hardware_consistency: None,
-        request_config_set_acceleration_mode: None,
-        request_config_release: None,
-        request_enqueue: None,
-        request_wait: None,
-        instrumentation_config_create: None,
-        instrumentation_config_assign_to_request_config: None,
-        instrumentation_config_set_unit: None,
-        instrumentation_config_set_mode: None,
-        instrumentation_config_release: None,
-        model_export_config_create: None,
-        model_export_config_release: None,
-        model_export_config_set_source: None,
-        model_export_config_set_target: None,
-        model_export: None,
-        model_override_alignment: None,
-        status_get_message: None,
-        status_get_max_message_length: None,
-    }
+    GnaSymbolTable::from_required(
+        mock_device_get_count,
+        mock_device_get_version,
+        mock_device_open,
+        mock_device_close,
+        mock_memory_alloc,
+        mock_memory_free,
+    )
 }
 
 pub(super) fn full_mock_library() -> GnaLibrary {
-    let mut symbols = base_mock_symbol_table();
-    symbols.device_create_for_export = Some(mock_device_create_for_export);
-    symbols.device_set_number_of_threads = Some(mock_device_set_number_of_threads);
-    symbols.memory_alloc_for_device = Some(mock_memory_alloc_for_device);
-    symbols.memory_set_tag = Some(mock_memory_set_tag);
+    let symbols = base_mock_symbol_table()
+        .with_device_create_for_export(mock_device_create_for_export)
+        .with_device_set_number_of_threads(mock_device_set_number_of_threads)
+        .with_memory_alloc_for_device(mock_memory_alloc_for_device)
+        .with_memory_set_tag(mock_memory_set_tag);
     GnaLibrary::from_symbol_table(symbols)
 }
 

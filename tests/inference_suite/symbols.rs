@@ -109,65 +109,31 @@ unsafe extern "C" fn mock_inst_release(inst_id: u32) -> Gna2Status {
 }
 
 pub(super) fn empty_symbols() -> GnaSymbolTable {
-    GnaSymbolTable {
-        device_get_count: stub_device_get_count,
-        device_get_version: stub_device_get_version,
-        device_open: stub_device_open,
-        device_create_for_export: None,
-        device_close: stub_device_close,
-        device_set_number_of_threads: None,
-        get_library_version: None,
-        memory_alloc: stub_memory_alloc,
-        memory_alloc_for_device: None,
-        memory_free: stub_memory_free,
-        memory_set_tag: None,
-        model_create: None,
-        model_release: None,
-        model_get_last_error: None,
-        model_error_get_message: None,
-        model_error_get_max_message_length: None,
-        operation_init_fully_connected_affine: None,
-        request_config_create: None,
-        request_config_set_operand_buffer: None,
-        request_config_enable_active_list: None,
-        request_config_enable_hardware_consistency: None,
-        request_config_set_acceleration_mode: None,
-        request_config_release: None,
-        request_enqueue: None,
-        request_wait: None,
-        instrumentation_config_create: None,
-        instrumentation_config_assign_to_request_config: None,
-        instrumentation_config_set_unit: None,
-        instrumentation_config_set_mode: None,
-        instrumentation_config_release: None,
-        model_export_config_create: None,
-        model_export_config_release: None,
-        model_export_config_set_source: None,
-        model_export_config_set_target: None,
-        model_export: None,
-        model_override_alignment: None,
-        status_get_message: None,
-        status_get_max_message_length: None,
-    }
+    GnaSymbolTable::from_required(
+        stub_device_get_count,
+        stub_device_get_version,
+        stub_device_open,
+        stub_device_close,
+        stub_memory_alloc,
+        stub_memory_free,
+    )
 }
 
 pub(super) fn full_symbols() -> GnaSymbolTable {
-    GnaSymbolTable {
-        request_config_create: Some(mock_request_config_create),
-        request_config_set_operand_buffer: Some(mock_request_config_set_operand_buffer),
-        request_config_enable_active_list: Some(mock_request_config_enable_active_list),
-        request_config_enable_hardware_consistency: Some(
+    empty_symbols()
+        .with_request_config_create(mock_request_config_create)
+        .with_request_config_set_operand_buffer(mock_request_config_set_operand_buffer)
+        .with_request_config_enable_active_list(mock_request_config_enable_active_list)
+        .with_request_config_enable_hardware_consistency(
             mock_request_config_enable_hardware_consistency,
-        ),
-        request_config_set_acceleration_mode: Some(mock_request_config_set_acceleration_mode),
-        request_config_release: Some(mock_request_config_release),
-        request_enqueue: Some(mock_request_enqueue),
-        request_wait: Some(mock_request_wait),
-        instrumentation_config_create: Some(mock_inst_config_create),
-        instrumentation_config_assign_to_request_config: Some(mock_inst_assign),
-        instrumentation_config_set_unit: Some(mock_inst_set_unit),
-        instrumentation_config_set_mode: Some(mock_inst_set_mode),
-        instrumentation_config_release: Some(mock_inst_release),
-        ..empty_symbols()
-    }
+        )
+        .with_request_config_set_acceleration_mode(mock_request_config_set_acceleration_mode)
+        .with_request_config_release(mock_request_config_release)
+        .with_request_enqueue(mock_request_enqueue)
+        .with_request_wait(mock_request_wait)
+        .with_instrumentation_config_create(mock_inst_config_create)
+        .with_instrumentation_config_assign_to_request_config(mock_inst_assign)
+        .with_instrumentation_config_set_unit(mock_inst_set_unit)
+        .with_instrumentation_config_set_mode(mock_inst_set_mode)
+        .with_instrumentation_config_release(mock_inst_release)
 }

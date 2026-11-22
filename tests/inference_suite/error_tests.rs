@@ -2,7 +2,6 @@ use nanai_gna_dll_load::error::GnaError;
 use nanai_gna_dll_load::inference::GnaRequestConfig;
 use nanai_gna_dll_load::instrumentation::GnaInstrumentationConfig;
 use nanai_gna_dll_load::loader::GnaLibrary;
-use nanai_gna_dll_load::symbol_table::GnaSymbolTable;
 use nanai_gna_dll_load::types::{
     Gna2AccelerationMode, Gna2DeviceVersion, Gna2InstrumentationPoint,
 };
@@ -16,7 +15,7 @@ fn test_request_config_enable_performance_counter_branches() {
 
     // Case 1: set_unit missing or failing is ignored by enable_performance_counter
     let mut syms_no_unit = full_symbols();
-    syms_no_unit.instrumentation_config_set_unit = None;
+    syms_no_unit.clear_instrumentation_config_set_unit();
     let lib_no_unit = GnaLibrary::from_symbol_table(syms_no_unit);
     let mut cfg = GnaRequestConfig::create(&lib_no_unit, 1).unwrap();
     cfg.enable_performance_counter()
@@ -24,7 +23,7 @@ fn test_request_config_enable_performance_counter_branches() {
 
     // Case 2: assign_to_request_config missing -> Err
     let mut syms_no_assign = full_symbols();
-    syms_no_assign.instrumentation_config_assign_to_request_config = None;
+    syms_no_assign.clear_instrumentation_config_assign_to_request_config();
     let lib_no_assign = GnaLibrary::from_symbol_table(syms_no_assign);
     let mut cfg_no_assign = GnaRequestConfig::create(&lib_no_assign, 1).unwrap();
     assert!(matches!(
@@ -34,7 +33,7 @@ fn test_request_config_enable_performance_counter_branches() {
 
     // Case 3: instrumentation_config_create missing -> Err
     let mut syms_no_inst_create = full_symbols();
-    syms_no_inst_create.instrumentation_config_create = None;
+    syms_no_inst_create.clear_instrumentation_config_create();
     let lib_no_inst = GnaLibrary::from_symbol_table(syms_no_inst_create);
     let mut cfg_no_inst = GnaRequestConfig::create(&lib_no_inst, 1).unwrap();
     assert!(matches!(
@@ -64,10 +63,7 @@ fn test_request_config_missing_symbols() {
     ));
 
     // Has create and release only -> all other methods report missing symbol
-    let syms_create_only = GnaSymbolTable {
-        request_config_create: Some(mock_request_config_create),
-        ..empty_symbols()
-    };
+    let syms_create_only = empty_symbols().with_request_config_create(mock_request_config_create);
     let lib = GnaLibrary::from_symbol_table(syms_create_only);
     let mut cfg = GnaRequestConfig::create(&lib, 0).unwrap();
 

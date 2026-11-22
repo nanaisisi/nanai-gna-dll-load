@@ -3,9 +3,8 @@ use std::ptr;
 
 use crate::error::{GnaError, Result};
 use crate::symbol_table::FnGna2OperationInitFullyConnectedAffine;
-use crate::types::{
-    GNA2_STATUS_SUCCESS, Gna2Operation, Gna2OperationType, Gna2Tensor, Gna2UserAllocator,
-};
+use crate::types::device::{GNA2_STATUS_SUCCESS, Gna2UserAllocator};
+use crate::types::model::{Gna2Operation, Gna2OperationType, Gna2Tensor};
 
 #[link(name = "kernel32")]
 unsafe extern "system" {

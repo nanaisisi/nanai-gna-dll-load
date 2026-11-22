@@ -59,11 +59,11 @@ fn test_request_config_full_lifecycle_and_methods() {
     let stats = cfg
         .get_performance_stats()
         .expect("get_performance_stats should succeed");
-    assert_eq!(stats.total_cycles, 2000);
-    assert_eq!(stats.stall_cycles, 500);
-    assert_eq!(stats.active_cycles, 1500);
-    assert!((stats.hw_usage_ratio - 0.75).abs() < 1e-6);
-    assert_eq!(stats.execution_time, Some(80));
+    assert_eq!(stats.total_cycles(), 2000);
+    assert_eq!(stats.stall_cycles(), 500);
+    assert_eq!(stats.active_cycles(), 1500);
+    assert!((stats.hw_usage_ratio() - 0.75).abs() < 1e-6);
+    assert_eq!(stats.execution_time(), Some(80));
 
     MOCK_STATE.with(|s| {
         let st = s.borrow();

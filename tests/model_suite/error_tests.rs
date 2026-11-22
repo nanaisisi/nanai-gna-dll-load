@@ -13,7 +13,7 @@ use super::symbols::{full_mock_symbol_table, sample_tensors};
 fn test_model_build_missing_model_create_and_empty_layers() {
     reset_mock_state();
     let mut no_create_syms = full_mock_symbol_table();
-    no_create_syms.model_create = None;
+    no_create_syms.clear_model_create();
     let no_create_lib = GnaLibrary::from_symbol_table(no_create_syms);
     let device_no_create = GnaDevice::open(&no_create_lib, 0).expect("open device");
 
@@ -120,7 +120,7 @@ fn test_model_build_create_error_fallbacks() {
         state.status_get_message_status = -1;
     });
     let mut syms_a = full_mock_symbol_table();
-    syms_a.model_get_last_error = None;
+    syms_a.clear_model_get_last_error();
     let lib_a = GnaLibrary::from_symbol_table(syms_a);
     let dev_a = GnaDevice::open(&lib_a, 0).expect("open device");
 
@@ -148,7 +148,7 @@ fn test_model_build_create_error_fallbacks() {
         state.get_last_error_status = GNA2_STATUS_MODEL_ERROR_UNAVAILABLE;
     });
     let mut syms_b = full_mock_symbol_table();
-    syms_b.status_get_message = None;
+    syms_b.clear_status_get_message();
     let lib_b = GnaLibrary::from_symbol_table(syms_b);
     let dev_b = GnaDevice::open(&lib_b, 0).expect("open device");
 
@@ -172,13 +172,13 @@ fn test_get_last_error_message_all_branches() {
 
     // 1. model_get_last_error missing -> None
     let mut syms = full_mock_symbol_table();
-    syms.model_get_last_error = None;
+    syms.clear_model_get_last_error();
     let lib = GnaLibrary::from_symbol_table(syms);
     assert_eq!(GnaModel::get_last_error_message(&lib), None);
 
     // 2. model_error_get_message missing -> None
     let mut syms = full_mock_symbol_table();
-    syms.model_error_get_message = None;
+    syms.clear_model_error_get_message();
     let lib = GnaLibrary::from_symbol_table(syms);
     assert_eq!(GnaModel::get_last_error_message(&lib), None);
 
@@ -203,7 +203,7 @@ fn test_get_last_error_message_all_branches() {
         state.error_message = String::from("Dimension out of bounds");
     });
     let mut syms = full_mock_symbol_table();
-    syms.model_error_get_max_message_length = None;
+    syms.clear_model_error_get_max_message_length();
     let lib_no_maxlen = GnaLibrary::from_symbol_table(syms);
     assert_eq!(
         GnaModel::get_last_error_message(&lib_no_maxlen),

@@ -1,7 +1,6 @@
 use nanai_gna_dll_load::error::GnaError;
 use nanai_gna_dll_load::instrumentation::GnaInstrumentationConfig;
 use nanai_gna_dll_load::loader::GnaLibrary;
-use nanai_gna_dll_load::symbol_table::GnaSymbolTable;
 use nanai_gna_dll_load::types::{
     Gna2InstrumentationMode, Gna2InstrumentationPoint, Gna2InstrumentationUnit,
 };
@@ -81,11 +80,11 @@ fn test_instrumentation_config_methods_success_and_drop() {
     let stats = inst
         .compute_performance_stats()
         .expect("compute_performance_stats should succeed");
-    assert_eq!(stats.total_cycles, 1000);
-    assert_eq!(stats.stall_cycles, 250);
-    assert_eq!(stats.active_cycles, 750);
-    assert!((stats.hw_usage_ratio - 0.75).abs() < 1e-6);
-    assert_eq!(stats.execution_time, Some(42));
+    assert_eq!(stats.total_cycles(), 1000);
+    assert_eq!(stats.stall_cycles(), 250);
+    assert_eq!(stats.active_cycles(), 750);
+    assert!((stats.hw_usage_ratio() - 0.75).abs() < 1e-6);
+    assert_eq!(stats.execution_time(), Some(42));
 
     MOCK_INST_STATE.with(|s| {
         let st = s.borrow();
@@ -112,10 +111,7 @@ fn test_instrumentation_config_missing_symbols_and_errors() {
     reset_mock_inst_state();
 
     // Create-only symbol table: assign, set_unit, set_mode, release are all None
-    let create_only = GnaSymbolTable {
-        instrumentation_config_create: Some(mock_inst_create),
-        ..empty_symbols()
-    };
+    let create_only = empty_symbols().with_instrumentation_config_create(mock_inst_create);
     let lib_create_only = GnaLibrary::from_symbol_table(create_only);
     let mut inst_missing = GnaInstrumentationConfig::create(
         &lib_create_only,
@@ -217,11 +213,11 @@ fn test_instrumentation_edge_cases_zero_cycles_stall_gt_total_and_missing_points
     let zero_stats = inst_zero
         .compute_performance_stats()
         .expect("compute_performance_stats should succeed on zero cycles");
-    assert_eq!(zero_stats.total_cycles, 0);
-    assert_eq!(zero_stats.stall_cycles, 0);
-    assert_eq!(zero_stats.active_cycles, 0);
-    assert_eq!(zero_stats.hw_usage_ratio, 0.0);
-    assert_eq!(zero_stats.execution_time, None);
+    assert_eq!(zero_stats.total_cycles(), 0);
+    assert_eq!(zero_stats.stall_cycles(), 0);
+    assert_eq!(zero_stats.active_cycles(), 0);
+    assert_eq!(zero_stats.hw_usage_ratio(), 0.0);
+    assert_eq!(zero_stats.execution_time(), None);
 
     // Stall cycles greater than total cycles -> saturating_sub clamps to 0 active cycles
     MOCK_INST_STATE.with(|s| {
@@ -239,9 +235,9 @@ fn test_instrumentation_edge_cases_zero_cycles_stall_gt_total_and_missing_points
     .unwrap();
     assert_eq!(inst_stall_gt.compute_hw_usage().unwrap(), 0.0);
     let stall_stats = inst_stall_gt.compute_performance_stats().unwrap();
-    assert_eq!(stall_stats.total_cycles, 100);
-    assert_eq!(stall_stats.stall_cycles, 250);
-    assert_eq!(stall_stats.active_cycles, 0);
-    assert_eq!(stall_stats.hw_usage_ratio, 0.0);
-    assert_eq!(stall_stats.execution_time, None);
+    assert_eq!(stall_stats.total_cycles(), 100);
+    assert_eq!(stall_stats.stall_cycles(), 250);
+    assert_eq!(stall_stats.active_cycles(), 0);
+    assert_eq!(stall_stats.hw_usage_ratio(), 0.0);
+    assert_eq!(stall_stats.execution_time(), None);
 }

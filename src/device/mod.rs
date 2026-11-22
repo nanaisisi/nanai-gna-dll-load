@@ -1,7 +1,8 @@
-use crate::error::{GnaError, Result};
+use crate::Result;
+use crate::error::GnaError;
 use crate::loader::GnaLibrary;
 use crate::memory::GnaBuffer;
-use crate::types::{GNA2_STATUS_SUCCESS, Gna2DeviceVersion};
+use crate::types::device::{GNA2_STATUS_SUCCESS, Gna2DeviceVersion};
 
 /// Represents an open GNA device handle.
 ///

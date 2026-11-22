@@ -74,8 +74,9 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
     if options.stress {
         let mut config = GnaLoadTestConfig::new().with_concurrency(options.concurrency);
         if let Some(seconds) = options.duration {
-            config = config.with_duration(Duration::from_secs(seconds));
-            config.iterations = options.iterations;
+            config = config
+                .with_duration(Duration::from_secs(seconds))
+                .with_optional_iterations(options.iterations);
         } else {
             config = config.with_iterations(options.iterations.unwrap_or(1000));
         }
@@ -98,8 +99,8 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
         Err(error) => return eprintln!("Inference failed / timed out: {error}"),
     }
     if let Ok(stats) = request.get_performance_stats() {
-        println!("Total cycles: {}", stats.total_cycles);
-        println!("Stall cycles: {}", stats.stall_cycles);
+        println!("Total cycles: {}", stats.total_cycles());
+        println!("Stall cycles: {}", stats.stall_cycles());
         println!("HW utilization: {:.2}%", stats.hw_usage_percentage());
     }
     let results = unsafe { std::slice::from_raw_parts(outputs_ptr, H * B) };

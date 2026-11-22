@@ -2,7 +2,8 @@ use std::ffi::c_char;
 
 use crate::device::GnaDevice;
 use crate::error::{GnaError, Result};
-use crate::types::{GNA2_STATUS_SUCCESS, Gna2Model, Gna2Operation, Gna2UserAllocator};
+use crate::types::device::{GNA2_STATUS_SUCCESS, Gna2UserAllocator};
+use crate::types::model::{Gna2Model, Gna2Operation};
 
 use super::{
     GnaModel, GnaModelBuilder, LayerDefinition, init_fca_manual, init_fca_via_symbol,

@@ -225,44 +225,17 @@ unsafe extern "C" fn mock_model_export(
 }
 
 pub(super) fn full_export_symbol_table() -> GnaSymbolTable {
-    GnaSymbolTable {
-        device_get_count: mock_device_get_count,
-        device_get_version: mock_device_get_version,
-        device_open: mock_device_open,
-        device_create_for_export: None,
-        device_close: mock_device_close,
-        device_set_number_of_threads: None,
-        get_library_version: None,
-        memory_alloc: mock_memory_alloc,
-        memory_alloc_for_device: None,
-        memory_free: mock_memory_free,
-        memory_set_tag: None,
-        model_create: None,
-        model_release: None,
-        model_get_last_error: None,
-        model_error_get_message: None,
-        model_error_get_max_message_length: None,
-        operation_init_fully_connected_affine: None,
-        request_config_create: None,
-        request_config_set_operand_buffer: None,
-        request_config_enable_active_list: None,
-        request_config_enable_hardware_consistency: None,
-        request_config_set_acceleration_mode: None,
-        request_config_release: None,
-        request_enqueue: None,
-        request_wait: None,
-        instrumentation_config_create: None,
-        instrumentation_config_assign_to_request_config: None,
-        instrumentation_config_set_unit: None,
-        instrumentation_config_set_mode: None,
-        instrumentation_config_release: None,
-        model_export_config_create: Some(mock_model_export_config_create),
-        model_export_config_release: Some(mock_model_export_config_release),
-        model_export_config_set_source: Some(mock_model_export_config_set_source),
-        model_export_config_set_target: Some(mock_model_export_config_set_target),
-        model_export: Some(mock_model_export),
-        model_override_alignment: None,
-        status_get_message: None,
-        status_get_max_message_length: None,
-    }
+    GnaSymbolTable::from_required(
+        mock_device_get_count,
+        mock_device_get_version,
+        mock_device_open,
+        mock_device_close,
+        mock_memory_alloc,
+        mock_memory_free,
+    )
+    .with_model_export_config_create(mock_model_export_config_create)
+    .with_model_export_config_release(mock_model_export_config_release)
+    .with_model_export_config_set_source(mock_model_export_config_set_source)
+    .with_model_export_config_set_target(mock_model_export_config_set_target)
+    .with_model_export(mock_model_export)
 }

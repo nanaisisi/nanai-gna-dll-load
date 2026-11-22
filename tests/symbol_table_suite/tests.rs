@@ -21,53 +21,53 @@ fn test_symbol_table_load_all_symbols_present_and_loader_success() {
         let raw_lib = unsafe { libloading::Library::new(&dll_path) }.unwrap();
         let table = GnaSymbolTable::load(&raw_lib).unwrap();
 
-        assert!(table.device_create_for_export.is_some());
-        assert!(table.device_set_number_of_threads.is_some());
-        assert!(table.get_library_version.is_some());
-        assert!(table.memory_alloc_for_device.is_some());
-        assert!(table.memory_set_tag.is_some());
-        assert!(table.model_create.is_some());
-        assert!(table.model_release.is_some());
-        assert!(table.model_get_last_error.is_some());
-        assert!(table.model_error_get_message.is_some());
-        assert!(table.model_error_get_max_message_length.is_some());
-        assert!(table.operation_init_fully_connected_affine.is_some());
-        assert!(table.request_config_create.is_some());
-        assert!(table.request_config_set_operand_buffer.is_some());
-        assert!(table.request_config_enable_active_list.is_some());
-        assert!(table.request_config_enable_hardware_consistency.is_some());
-        assert!(table.request_config_set_acceleration_mode.is_some());
-        assert!(table.request_config_release.is_some());
-        assert!(table.request_enqueue.is_some());
-        assert!(table.request_wait.is_some());
-        assert!(table.instrumentation_config_create.is_some());
+        assert!(table.device_create_for_export().is_some());
+        assert!(table.device_set_number_of_threads().is_some());
+        assert!(table.get_library_version().is_some());
+        assert!(table.memory_alloc_for_device().is_some());
+        assert!(table.memory_set_tag().is_some());
+        assert!(table.model_create().is_some());
+        assert!(table.model_release().is_some());
+        assert!(table.model_get_last_error().is_some());
+        assert!(table.model_error_get_message().is_some());
+        assert!(table.model_error_get_max_message_length().is_some());
+        assert!(table.operation_init_fully_connected_affine().is_some());
+        assert!(table.request_config_create().is_some());
+        assert!(table.request_config_set_operand_buffer().is_some());
+        assert!(table.request_config_enable_active_list().is_some());
+        assert!(table.request_config_enable_hardware_consistency().is_some());
+        assert!(table.request_config_set_acceleration_mode().is_some());
+        assert!(table.request_config_release().is_some());
+        assert!(table.request_enqueue().is_some());
+        assert!(table.request_wait().is_some());
+        assert!(table.instrumentation_config_create().is_some());
         assert!(
             table
-                .instrumentation_config_assign_to_request_config
+                .instrumentation_config_assign_to_request_config()
                 .is_some()
         );
-        assert!(table.instrumentation_config_set_unit.is_some());
-        assert!(table.instrumentation_config_set_mode.is_some());
-        assert!(table.instrumentation_config_release.is_some());
-        assert!(table.model_export_config_create.is_some());
-        assert!(table.model_export_config_release.is_some());
-        assert!(table.model_export_config_set_source.is_some());
-        assert!(table.model_export_config_set_target.is_some());
-        assert!(table.model_export.is_some());
-        assert!(table.model_override_alignment.is_some());
-        assert!(table.status_get_message.is_some());
-        assert!(table.status_get_max_message_length.is_some());
+        assert!(table.instrumentation_config_set_unit().is_some());
+        assert!(table.instrumentation_config_set_mode().is_some());
+        assert!(table.instrumentation_config_release().is_some());
+        assert!(table.model_export_config_create().is_some());
+        assert!(table.model_export_config_release().is_some());
+        assert!(table.model_export_config_set_source().is_some());
+        assert!(table.model_export_config_set_target().is_some());
+        assert!(table.model_export().is_some());
+        assert!(table.model_override_alignment().is_some());
+        assert!(table.status_get_message().is_some());
+        assert!(table.status_get_max_message_length().is_some());
 
         let mut count = 0u32;
-        let status = unsafe { (table.device_get_count)(&mut count) };
+        let status = unsafe { (table.device_get_count())(&mut count) };
         assert_eq!(status, 0);
         assert_eq!(count, 2);
         assert_eq!(
-            unsafe { (table.model_error_get_max_message_length.unwrap())() },
+            unsafe { (table.model_error_get_max_message_length().unwrap())() },
             512
         );
         assert_eq!(
-            unsafe { (table.status_get_max_message_length.unwrap())() },
+            unsafe { (table.status_get_max_message_length().unwrap())() },
             256
         );
 
@@ -80,7 +80,7 @@ fn test_symbol_table_load_all_symbols_present_and_loader_success() {
         assert_eq!(lib.path(), dll_path.as_path());
         assert_eq!(lib.get_library_version().unwrap(), "3.5.0-mock");
         lib.override_alignment(64).unwrap();
-        assert!(lib.symbols().model_create.is_some());
+        assert!(lib.symbols().model_create().is_some());
         drop(lib);
     }
 
@@ -132,45 +132,45 @@ fn test_symbol_table_load_required_only_symbols() {
         let raw_lib = unsafe { libloading::Library::new(&dll_path) }.unwrap();
         let table = GnaSymbolTable::load(&raw_lib).unwrap();
 
-        assert!(table.device_create_for_export.is_none());
-        assert!(table.device_set_number_of_threads.is_none());
-        assert!(table.get_library_version.is_none());
-        assert!(table.memory_alloc_for_device.is_none());
-        assert!(table.memory_set_tag.is_none());
-        assert!(table.model_create.is_none());
-        assert!(table.model_release.is_none());
-        assert!(table.model_get_last_error.is_none());
-        assert!(table.model_error_get_message.is_none());
-        assert!(table.model_error_get_max_message_length.is_none());
-        assert!(table.operation_init_fully_connected_affine.is_none());
-        assert!(table.request_config_create.is_none());
-        assert!(table.request_config_set_operand_buffer.is_none());
-        assert!(table.request_config_enable_active_list.is_none());
-        assert!(table.request_config_enable_hardware_consistency.is_none());
-        assert!(table.request_config_set_acceleration_mode.is_none());
-        assert!(table.request_config_release.is_none());
-        assert!(table.request_enqueue.is_none());
-        assert!(table.request_wait.is_none());
-        assert!(table.instrumentation_config_create.is_none());
+        assert!(table.device_create_for_export().is_none());
+        assert!(table.device_set_number_of_threads().is_none());
+        assert!(table.get_library_version().is_none());
+        assert!(table.memory_alloc_for_device().is_none());
+        assert!(table.memory_set_tag().is_none());
+        assert!(table.model_create().is_none());
+        assert!(table.model_release().is_none());
+        assert!(table.model_get_last_error().is_none());
+        assert!(table.model_error_get_message().is_none());
+        assert!(table.model_error_get_max_message_length().is_none());
+        assert!(table.operation_init_fully_connected_affine().is_none());
+        assert!(table.request_config_create().is_none());
+        assert!(table.request_config_set_operand_buffer().is_none());
+        assert!(table.request_config_enable_active_list().is_none());
+        assert!(table.request_config_enable_hardware_consistency().is_none());
+        assert!(table.request_config_set_acceleration_mode().is_none());
+        assert!(table.request_config_release().is_none());
+        assert!(table.request_enqueue().is_none());
+        assert!(table.request_wait().is_none());
+        assert!(table.instrumentation_config_create().is_none());
         assert!(
             table
-                .instrumentation_config_assign_to_request_config
+                .instrumentation_config_assign_to_request_config()
                 .is_none()
         );
-        assert!(table.instrumentation_config_set_unit.is_none());
-        assert!(table.instrumentation_config_set_mode.is_none());
-        assert!(table.instrumentation_config_release.is_none());
-        assert!(table.model_export_config_create.is_none());
-        assert!(table.model_export_config_release.is_none());
-        assert!(table.model_export_config_set_source.is_none());
-        assert!(table.model_export_config_set_target.is_none());
-        assert!(table.model_export.is_none());
-        assert!(table.model_override_alignment.is_none());
-        assert!(table.status_get_message.is_none());
-        assert!(table.status_get_max_message_length.is_none());
+        assert!(table.instrumentation_config_set_unit().is_none());
+        assert!(table.instrumentation_config_set_mode().is_none());
+        assert!(table.instrumentation_config_release().is_none());
+        assert!(table.model_export_config_create().is_none());
+        assert!(table.model_export_config_release().is_none());
+        assert!(table.model_export_config_set_source().is_none());
+        assert!(table.model_export_config_set_target().is_none());
+        assert!(table.model_export().is_none());
+        assert!(table.model_override_alignment().is_none());
+        assert!(table.status_get_message().is_none());
+        assert!(table.status_get_max_message_length().is_none());
 
         let mut count = 0u32;
-        assert_eq!(unsafe { (table.device_get_count)(&mut count) }, 0);
+        assert_eq!(unsafe { (table.device_get_count())(&mut count) }, 0);
         assert_eq!(count, 1);
 
         drop(raw_lib);

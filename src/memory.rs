@@ -3,9 +3,10 @@ use std::ops::{Deref, DerefMut};
 use std::ptr::NonNull;
 use std::slice;
 
-use crate::error::{GnaError, Result};
+use crate::Result;
+use crate::error::GnaError;
 use crate::loader::GnaLibrary;
-use crate::types::GNA2_STATUS_SUCCESS;
+use crate::types::device::GNA2_STATUS_SUCCESS;
 
 /// A safe, RAII-managed memory buffer allocated via GNA's memory allocator.
 ///

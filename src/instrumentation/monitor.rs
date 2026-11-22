@@ -2,18 +2,66 @@
 #[derive(Debug, Clone, PartialEq)]
 pub struct GnaPerformanceStats {
     /// Total hardware execution cycles.
-    pub total_cycles: u64,
+    pub(crate) total_cycles: u64,
     /// Hardware stall cycles (memory waits, DMA wait, etc.).
-    pub stall_cycles: u64,
+    pub(crate) stall_cycles: u64,
     /// Active (non-stalled) hardware execution cycles (`total_cycles - stall_cycles`).
-    pub active_cycles: u64,
+    pub(crate) active_cycles: u64,
     /// Hardware utilization ratio in range `[0.0, 1.0]` (`active_cycles / total_cycles`).
-    pub hw_usage_ratio: f64,
+    pub(crate) hw_usage_ratio: f64,
     /// Execution time in configured unit (e.g. microseconds) if `LibExecution` was recorded.
-    pub execution_time: Option<u64>,
+    pub(crate) execution_time: Option<u64>,
 }
 
 impl GnaPerformanceStats {
+    /// Construct performance statistics from total and stall cycle counts.
+    pub fn from_cycles(total_cycles: u64, stall_cycles: u64) -> Self {
+        let active_cycles = total_cycles.saturating_sub(stall_cycles);
+        let hw_usage_ratio = if total_cycles > 0 {
+            (active_cycles as f64) / (total_cycles as f64)
+        } else {
+            0.0
+        };
+        Self {
+            total_cycles,
+            stall_cycles,
+            active_cycles,
+            hw_usage_ratio,
+            execution_time: None,
+        }
+    }
+
+    /// Attach an optional execution time measurement.
+    pub fn with_execution_time(mut self, execution_time: Option<u64>) -> Self {
+        self.execution_time = execution_time;
+        self
+    }
+
+    /// Total hardware execution cycles.
+    pub fn total_cycles(&self) -> u64 {
+        self.total_cycles
+    }
+
+    /// Hardware stall cycles.
+    pub fn stall_cycles(&self) -> u64 {
+        self.stall_cycles
+    }
+
+    /// Active (non-stalled) hardware execution cycles.
+    pub fn active_cycles(&self) -> u64 {
+        self.active_cycles
+    }
+
+    /// Hardware utilization ratio in range `[0.0, 1.0]`.
+    pub fn hw_usage_ratio(&self) -> f64 {
+        self.hw_usage_ratio
+    }
+
+    /// Execution time in configured unit, if recorded.
+    pub fn execution_time(&self) -> Option<u64> {
+        self.execution_time
+    }
+
     /// Percentage representation of hardware utilization (0.0% to 100.0%).
     pub fn hw_usage_percentage(&self) -> f64 {
         self.hw_usage_ratio * 100.0

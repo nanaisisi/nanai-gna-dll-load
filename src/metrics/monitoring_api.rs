@@ -3,17 +3,27 @@ use crate::metrics::metric_store::MetricStore;
 use std::sync::OnceLock;
 
 pub struct MonitoringApi {
-    pub store: MetricStore,
+    pub(crate) store: MetricStore,
 }
 
 impl MonitoringApi {
+    /// 新しい MonitoringApi インスタンスを生成します。
+    pub fn new() -> Self {
+        Self {
+            store: MetricStore::new(),
+        }
+    }
+
+    /// 内部の MetricStore への参照を返します。
+    pub fn store(&self) -> &MetricStore {
+        &self.store
+    }
+
     /// 初期化関数。シングルトンパターンを適用し、アプリケーション全体で単一インスタンスを保証する。
     pub fn get_instance() -> &'static MonitoringApi {
         // OnceLockを使って静的なシングルトンインスタンスを管理
         static INSTANCE: OnceLock<MonitoringApi> = OnceLock::new();
-        INSTANCE.get_or_init(|| MonitoringApi {
-            store: MetricStore::new(),
-        })
+        INSTANCE.get_or_init(MonitoringApi::new)
     }
 
     /// 新しいメトリクスを記録する（例：レイテンシ測定の開始）。
@@ -27,6 +37,12 @@ impl MonitoringApi {
         // メトリクスの更新と集計処理を一箇所で行う
         println!("Recorded measurement: key={}, value={}", key, value);
         self.store.record(key, value)
+    }
+}
+
+impl Default for MonitoringApi {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

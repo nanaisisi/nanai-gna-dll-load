@@ -2,7 +2,7 @@ use std::ffi::c_void;
 
 use crate::error::{GnaError, Result};
 use crate::loader::GnaLibrary;
-use crate::types::{
+use crate::types::device::{
     GNA2_STATUS_SUCCESS, Gna2DeviceVersion, Gna2ModelExportComponent, Gna2UserAllocator,
 };
 

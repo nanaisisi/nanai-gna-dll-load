@@ -118,46 +118,21 @@ unsafe extern "C" fn mock_status_get_message(
 }
 
 pub(super) fn full_mock_symbol_table() -> GnaSymbolTable {
-    GnaSymbolTable {
-        device_get_count: mock_device_get_count,
-        device_get_version: mock_device_get_version,
-        device_open: mock_device_open,
-        device_create_for_export: None,
-        device_close: mock_device_close,
-        device_set_number_of_threads: None,
-        get_library_version: None,
-        memory_alloc: mock_memory_alloc,
-        memory_alloc_for_device: None,
-        memory_free: mock_memory_free,
-        memory_set_tag: None,
-        model_create: Some(mock_model_create),
-        model_release: Some(mock_model_release),
-        model_get_last_error: Some(mock_model_get_last_error),
-        model_error_get_message: Some(mock_model_error_get_message),
-        model_error_get_max_message_length: Some(mock_model_error_get_max_message_length),
-        operation_init_fully_connected_affine: Some(mock_operation_init_fully_connected_affine),
-        request_config_create: None,
-        request_config_set_operand_buffer: None,
-        request_config_enable_active_list: None,
-        request_config_enable_hardware_consistency: None,
-        request_config_set_acceleration_mode: None,
-        request_config_release: None,
-        request_enqueue: None,
-        request_wait: None,
-        instrumentation_config_create: None,
-        instrumentation_config_assign_to_request_config: None,
-        instrumentation_config_set_unit: None,
-        instrumentation_config_set_mode: None,
-        instrumentation_config_release: None,
-        model_export_config_create: None,
-        model_export_config_release: None,
-        model_export_config_set_source: None,
-        model_export_config_set_target: None,
-        model_export: None,
-        model_override_alignment: None,
-        status_get_message: Some(mock_status_get_message),
-        status_get_max_message_length: None,
-    }
+    GnaSymbolTable::from_required(
+        mock_device_get_count,
+        mock_device_get_version,
+        mock_device_open,
+        mock_device_close,
+        mock_memory_alloc,
+        mock_memory_free,
+    )
+    .with_model_create(mock_model_create)
+    .with_model_release(mock_model_release)
+    .with_model_get_last_error(mock_model_get_last_error)
+    .with_model_error_get_message(mock_model_error_get_message)
+    .with_model_error_get_max_message_length(mock_model_error_get_max_message_length)
+    .with_operation_init_fully_connected_affine(mock_operation_init_fully_connected_affine)
+    .with_status_get_message(mock_status_get_message)
 }
 
 pub(super) fn sample_tensors(

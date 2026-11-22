@@ -66,7 +66,7 @@ fn test_model_export_full_lifecycle_and_allocator() {
 fn test_model_export_drop_without_release_symbol() {
     reset_mock_state();
     let mut syms = full_export_symbol_table();
-    syms.model_export_config_release = None;
+    syms.clear_model_export_config_release();
     let library = GnaLibrary::from_symbol_table(syms);
 
     let config =
@@ -86,7 +86,7 @@ fn test_model_export_missing_symbols() {
 
     // 1. Missing model_export_config_create
     let mut syms = full_export_symbol_table();
-    syms.model_export_config_create = None;
+    syms.clear_model_export_config_create();
     let lib = GnaLibrary::from_symbol_table(syms);
     let err = GnaModelExportConfig::create(&lib, test_user_allocator)
         .err()
@@ -97,7 +97,7 @@ fn test_model_export_missing_symbols() {
 
     // 2. Missing model_export_config_set_source
     let mut syms = full_export_symbol_table();
-    syms.model_export_config_set_source = None;
+    syms.clear_model_export_config_set_source();
     let lib = GnaLibrary::from_symbol_table(syms);
     let mut cfg = GnaModelExportConfig::create(&lib, test_user_allocator).expect("create");
     let err = cfg
@@ -109,7 +109,7 @@ fn test_model_export_missing_symbols() {
 
     // 3. Missing model_export_config_set_target
     let mut syms = full_export_symbol_table();
-    syms.model_export_config_set_target = None;
+    syms.clear_model_export_config_set_target();
     let lib = GnaLibrary::from_symbol_table(syms);
     let mut cfg = GnaModelExportConfig::create(&lib, test_user_allocator).expect("create");
     let err = cfg
@@ -121,7 +121,7 @@ fn test_model_export_missing_symbols() {
 
     // 4. Missing model_export
     let mut syms = full_export_symbol_table();
-    syms.model_export = None;
+    syms.clear_model_export();
     let lib = GnaLibrary::from_symbol_table(syms);
     let cfg = GnaModelExportConfig::create(&lib, test_user_allocator).expect("create");
     let err = cfg

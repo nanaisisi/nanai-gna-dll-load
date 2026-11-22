@@ -170,30 +170,20 @@ impl GnaInstrumentationConfig {
         let stall_cycles = stall
             .ok_or_else(|| GnaError::Other("Missing HwStallCycles instrumentation point".into()))?;
 
-        let active_cycles = total_cycles.saturating_sub(stall_cycles);
-        let hw_usage_ratio = if total_cycles > 0 {
-            (active_cycles as f64) / (total_cycles as f64)
-        } else {
-            0.0
-        };
+        let stats = GnaPerformanceStats::from_cycles(total_cycles, stall_cycles)
+            .with_execution_time(exec_time);
 
         // --- Monitoring Integration Start ---
         let monitoring_api = MonitoringApi::get_instance();
-        monitoring_api.record_measurement("gna_total_cycles", total_cycles as f64);
-        monitoring_api.record_measurement("gna_stall_cycles", stall_cycles as f64);
-        monitoring_api.record_measurement("gna_active_cycles", active_cycles as f64);
-        if let Some(t) = exec_time {
+        monitoring_api.record_measurement("gna_total_cycles", stats.total_cycles() as f64);
+        monitoring_api.record_measurement("gna_stall_cycles", stats.stall_cycles() as f64);
+        monitoring_api.record_measurement("gna_active_cycles", stats.active_cycles() as f64);
+        if let Some(t) = stats.execution_time() {
             monitoring_api.record_measurement("gna_exec_time", t as f64);
         }
         // --- Monitoring Integration End ---
 
-        Ok(GnaPerformanceStats {
-            total_cycles,
-            stall_cycles,
-            active_cycles,
-            hw_usage_ratio,
-            execution_time: exec_time,
-        })
+        Ok(stats)
     }
 
     /// Get configuration ID.

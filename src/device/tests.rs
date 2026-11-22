@@ -19,7 +19,9 @@ thread_local! {
 // Global tracker for memory allocations to safely deallocate with Rust's allocator
 static ALLOCATIONS: Mutex<Option<HashMap<usize, std::alloc::Layout>>> = Mutex::new(None);
 
-unsafe extern "C" fn mock_device_get_count(device_count: *mut u32) -> crate::types::Gna2Status {
+unsafe extern "C" fn mock_device_get_count(
+    device_count: *mut u32,
+) -> crate::types::device::Gna2Status {
     MOCK_STATE.with(|s| {
         unsafe { *device_count = s.borrow().device_count };
     });
@@ -29,16 +31,16 @@ unsafe extern "C" fn mock_device_get_count(device_count: *mut u32) -> crate::typ
 unsafe extern "C" fn mock_device_get_version(
     _device_index: u32,
     device_version: *mut Gna2DeviceVersion,
-) -> crate::types::Gna2Status {
+) -> crate::types::device::Gna2Status {
     unsafe { *device_version = Gna2DeviceVersion::SOFTWARE_EMULATION };
     GNA2_STATUS_SUCCESS
 }
 
-unsafe extern "C" fn mock_device_open(_device_index: u32) -> crate::types::Gna2Status {
+unsafe extern "C" fn mock_device_open(_device_index: u32) -> crate::types::device::Gna2Status {
     GNA2_STATUS_SUCCESS
 }
 
-unsafe extern "C" fn mock_device_close(_device_index: u32) -> crate::types::Gna2Status {
+unsafe extern "C" fn mock_device_close(_device_index: u32) -> crate::types::device::Gna2Status {
     MOCK_STATE.with(|s| {
         s.borrow_mut().close_call_count += 1;
     });
@@ -48,7 +50,7 @@ unsafe extern "C" fn mock_device_close(_device_index: u32) -> crate::types::Gna2
 unsafe extern "C" fn mock_device_create_for_export(
     _target_device_version: Gna2DeviceVersion,
     device_index: *mut u32,
-) -> crate::types::Gna2Status {
+) -> crate::types::device::Gna2Status {
     unsafe { *device_index = 42 };
     GNA2_STATUS_SUCCESS
 }
@@ -56,7 +58,7 @@ unsafe extern "C" fn mock_device_create_for_export(
 unsafe extern "C" fn mock_device_set_number_of_threads(
     _device_index: u32,
     _number_of_threads: u32,
-) -> crate::types::Gna2Status {
+) -> crate::types::device::Gna2Status {
     GNA2_STATUS_SUCCESS
 }
 
@@ -64,7 +66,7 @@ unsafe extern "C" fn mock_memory_alloc(
     size_requested: u32,
     size_granted: *mut u32,
     memory_address: *mut *mut c_void,
-) -> crate::types::Gna2Status {
+) -> crate::types::device::Gna2Status {
     let layout = std::alloc::Layout::from_size_align(size_requested as usize, 64).unwrap();
     let ptr = unsafe { std::alloc::alloc_zeroed(layout) };
     let mut map = ALLOCATIONS.lock().unwrap();
@@ -78,16 +80,7 @@ unsafe extern "C" fn mock_memory_alloc(
     GNA2_STATUS_SUCCESS
 }
 
-unsafe extern "C" fn mock_memory_alloc_for_device(
-    _device_index: u32,
-    size_requested: u32,
-    size_granted: *mut u32,
-    memory_address: *mut *mut c_void,
-) -> crate::types::Gna2Status {
-    unsafe { mock_memory_alloc(size_requested, size_granted, memory_address) }
-}
-
-unsafe extern "C" fn mock_memory_free(memory: *mut c_void) -> crate::types::Gna2Status {
+unsafe extern "C" fn mock_memory_free(memory: *mut c_void) -> crate::types::device::Gna2Status {
     let mut map = ALLOCATIONS.lock().unwrap();
     let layout = map
         .as_mut()
@@ -108,7 +101,7 @@ fn mock_symbol_table() -> crate::symbol_table::GnaSymbolTable {
         device_set_number_of_threads: Some(mock_device_set_number_of_threads),
         get_library_version: None,
         memory_alloc: mock_memory_alloc,
-        memory_alloc_for_device: Some(mock_memory_alloc_for_device),
+        memory_alloc_for_device: None,
         memory_free: mock_memory_free,
         memory_set_tag: None,
         model_create: None,

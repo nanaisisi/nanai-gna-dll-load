@@ -22,7 +22,10 @@ fn test_device_version_as_str_all_variants() {
     assert_eq!(Gna2DeviceVersion::V3_5.as_str(), "GNA 3.5");
     assert_eq!(Gna2DeviceVersion::EMBEDDED_1_0.as_str(), "GNA Embedded 1.0");
     assert_eq!(Gna2DeviceVersion::EMBEDDED_3_1.as_str(), "GNA Embedded 3.1");
-    assert_eq!(Gna2DeviceVersion(0x9999).as_str(), "Unknown GNA Version");
+    assert_eq!(
+        Gna2DeviceVersion::new(0x9999).as_str(),
+        "Unknown GNA Version"
+    );
     assert_eq!(
         Gna2DeviceVersion::default(),
         Gna2DeviceVersion::SOFTWARE_EMULATION

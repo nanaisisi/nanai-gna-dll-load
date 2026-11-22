@@ -1,3 +1,5 @@
+#[path = "symbol_table_suite/accessors_tests.rs"]
+mod accessors_tests;
 #[path = "symbol_table_suite/all_dll_src.rs"]
 mod all_dll_src;
 #[path = "symbol_table_suite/guards.rs"]
