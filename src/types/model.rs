@@ -109,12 +109,24 @@ impl Gna2Shape {
     }
 
     pub fn d2(x: u32, y: u32) -> Self {
+        Self::from_dims(&[x, y])
+    }
+
+    pub fn d3(x: u32, y: u32, z: u32) -> Self {
+        Self::from_dims(&[x, y, z])
+    }
+
+    pub fn d4(x: u32, y: u32, z: u32, w: u32) -> Self {
+        Self::from_dims(&[x, y, z, w])
+    }
+
+    pub fn from_dims(dims: &[u32]) -> Self {
+        let count = dims.len().min(GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS);
         let mut s = Self {
-            number_of_dimensions: 2,
+            number_of_dimensions: count as u32,
             dimensions: [0; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
         };
-        s.dimensions[0] = x;
-        s.dimensions[1] = y;
+        s.dimensions[..count].copy_from_slice(&dims[..count]);
         s
     }
 
@@ -187,13 +199,50 @@ impl Gna2Tensor {
     }
 
     pub fn d1(x: u32, data_type: Gna2DataType, data: *mut std::ffi::c_void) -> Self {
+        Self::from_shape(Gna2Shape::d1(x), data_type, data)
+    }
+
+    pub fn d3(
+        x: u32,
+        y: u32,
+        z: u32,
+        data_type: Gna2DataType,
+        data: *mut std::ffi::c_void,
+    ) -> Self {
+        Self::from_shape(Gna2Shape::d3(x, y, z), data_type, data)
+    }
+
+    pub fn d4(
+        x: u32,
+        y: u32,
+        z: u32,
+        w: u32,
+        data_type: Gna2DataType,
+        data: *mut std::ffi::c_void,
+    ) -> Self {
+        Self::from_shape(Gna2Shape::d4(x, y, z, w), data_type, data)
+    }
+
+    pub fn from_shape(
+        shape: Gna2Shape,
+        data_type: Gna2DataType,
+        data: *mut std::ffi::c_void,
+    ) -> Self {
         Self {
-            shape: Gna2Shape::d1(x),
+            shape,
             mode: Gna2TensorMode::Default,
             layout: [0; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS],
             data_type,
             data,
         }
+    }
+
+    pub fn with_layout(mut self, layout: &str) -> Self {
+        self.layout = [0; GNA2_SHAPE_MAXIMUM_NUMBER_OF_DIMENSIONS];
+        for (dst, &b) in self.layout.iter_mut().zip(layout.as_bytes().iter()) {
+            *dst = b as std::ffi::c_char;
+        }
+        self
     }
 
     pub fn d2(x: u32, y: u32, data_type: Gna2DataType, data: *mut std::ffi::c_void) -> Self {
@@ -299,5 +348,64 @@ impl Gna2Model {
 
     pub const fn operations(&self) -> *mut Gna2Operation {
         self.operations
+    }
+}
+
+/// Piecewise linear (PWL) segment matching Intel GNA2 `Gna2PwlSegment`.
+#[repr(C)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub struct Gna2PwlSegment {
+    pub x_base: i32,
+    pub y_base: i16,
+    pub slope: i16,
+}
+
+/// Helper owning PWL activation segments and exposing a `Gna2Tensor` view.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GnaPwlActivation {
+    segments: Vec<Gna2PwlSegment>,
+}
+
+impl GnaPwlActivation {
+    /// Create a PWL activation from custom segments.
+    pub fn from_segments(segments: Vec<Gna2PwlSegment>) -> Self {
+        Self { segments }
+    }
+
+    /// Create a ReLU PWL activation (`0` for `x < 0`, identity slope for `x >= 0`).
+    pub fn relu() -> Self {
+        Self::leaky_relu(0)
+    }
+
+    /// Create a Leaky-ReLU PWL activation with the given negative-region slope.
+    pub fn leaky_relu(negative_slope: i16) -> Self {
+        Self {
+            segments: vec![
+                Gna2PwlSegment {
+                    x_base: i32::MIN,
+                    y_base: 0,
+                    slope: negative_slope,
+                },
+                Gna2PwlSegment {
+                    x_base: 0,
+                    y_base: 0,
+                    slope: 1,
+                },
+            ],
+        }
+    }
+
+    /// Access the underlying PWL segments.
+    pub fn segments(&self) -> &[Gna2PwlSegment] {
+        &self.segments
+    }
+
+    /// Build a `Gna2Tensor` (`Gna2DataType::PwlSegment`) pointing to this activation's segments.
+    pub fn as_tensor(&mut self) -> Gna2Tensor {
+        Gna2Tensor::d1(
+            self.segments.len() as u32,
+            Gna2DataType::PwlSegment,
+            self.segments.as_mut_ptr() as *mut std::ffi::c_void,
+        )
     }
 }
