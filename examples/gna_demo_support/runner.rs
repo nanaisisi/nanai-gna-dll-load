@@ -3,6 +3,7 @@ use std::time::{Duration, Instant};
 use nanai_gna_dll_load::{
     device::GnaDevice,
     inference::GnaRequestConfig,
+    is_gna_uncontended,
     model::GnaModelBuilder,
     stress::{GnaLoadTestConfig, GnaLoadTester},
     types::{Gna2AccelerationMode, Gna2DataType, Gna2Tensor},
@@ -104,4 +105,8 @@ pub fn run_model_demo(device: &GnaDevice, options: &DemoOptions) {
     }
     let results = unsafe { std::slice::from_raw_parts(outputs_ptr, H * B) };
     println!("Inference outputs: {results:?}");
+    match is_gna_uncontended() {
+        Ok(uncontended) => println!("GNA uncontended (no external processes): {uncontended}"),
+        Err(error) => println!("GNA contention check failed: {error}"),
+    }
 }
